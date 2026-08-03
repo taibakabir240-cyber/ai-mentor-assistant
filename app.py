@@ -105,7 +105,6 @@ if st.session_state.nav_option == "AI Chat Assistant":
                             {"role": "system", "content": "You are a helpful, professional AI mentor and student assistant within the Ezitech ecosystem, guiding interns with programming, debugging, and academic projects."}
                         ]
                         for m in st.session_state.messages:
-                            # Map roles correctly for Groq API
                             role = "user" if m["role"] == "user" else "assistant"
                             formatted_messages.append({"role": role, "content": m["content"]})
 
