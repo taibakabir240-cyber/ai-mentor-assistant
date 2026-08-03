@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import gtts
 import os
-import speech_recognition as sr
+# import speech_recognition as sr
 import pandas as pd
 from datetime import datetime
 import base64
