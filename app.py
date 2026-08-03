@@ -5,7 +5,6 @@ from datetime import datetime
 import base64
 from groq import Groq
 from gtts import gTTS
-import speech_recognition as sr
 import tempfile
 
 # 1. Page Configuration
