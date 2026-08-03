@@ -6,11 +6,6 @@ import speech_recognition as sr
 import pandas as pd
 from datetime import datetime
 import base64
-from groq import Groq
-
-# Safely fetch API key from Streamlit secrets or environment
-api_key = st.secrets.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
-client = Groq(api_key=api_key)
 
 # FastAPI Backend URL
 BASE_URL = "http://127.0.0.1:8000"
@@ -254,12 +249,12 @@ if not st.session_state.logged_in:
                 else:
                     st.error(t["invalid_creds"])
 else:
-    # Guaranteed DP Image Handler
+    # Guaranteed DP Image Handler (Default Avatar or User Uploaded Base64)
     img_src = st.session_state.profile_image if st.session_state.profile_image else DEFAULT_HIJABI_AVATAR
 
     st.sidebar.markdown(f"""
         <div class="profile-header-banner">
-            <div style="font-weight: 600; font-size: 13px; color: #e0f2fe; margin-bottom: 8px; letter-spacing: 0.5px;">💻 Developed by Taiba Kabir</div>
+            <div style="font-weight: 600; font-size: 13px; color: #e0f2fe; margin-bottom: 8px; letter-spacing: 0.5px;">💻 Developed by Taiba</div>
             <div style="display: flex; justify-content: center; margin-bottom: 6px;">
                 <img src="{img_src}" style="width: 75px; height: 75px; border-radius: 50%; object-fit: cover; border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
             </div>
@@ -271,6 +266,7 @@ else:
 
     # Settings Menu
     with st.sidebar.expander("⚙️ Settings"):
+        
         st.markdown("##### 🎨 Preferences")
         st.session_state.selected_theme = st.selectbox("🎨 Choose Theme", ["Ezitech Modern", "Dark Mode", "Clean Light"], index=["Ezitech Modern", "Dark Mode", "Clean Light"].index(st.session_state.selected_theme))
         st.session_state.selected_language = st.selectbox("🌐 Language", ["English", "Urdu (اردو)"], index=["English", "Urdu (اردو)"].index(st.session_state.selected_language))
@@ -530,7 +526,7 @@ else:
                 if new_status:
                     completed_count += 1
             
-            progress_percentage = completed_count / total_count if total_count > 0 else 0
+            progress_percentage = completed_count / total_count
             st.progress(progress_percentage)
             st.write(f"🎯 **Overall Progress:** {completed_count} of {total_count} tasks completed ({int(progress_percentage * 100)}%)")
 
