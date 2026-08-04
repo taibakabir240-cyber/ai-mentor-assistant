@@ -67,25 +67,24 @@ if "student_messages" not in st.session_state:
         {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you with your case studies, Neo4j, or debugging concepts today?"}
     ]
 
-# WhatsApp Style & Theme Customization CSS
+# WhatsApp Style Fixed Bottom Bar CSS (Ensuring it sticks to bottom properly using Streamlit overrides)
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
             .main { background-color: #0e1117; color: #ffffff; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
-            /* WhatsApp Style Fixed Bottom Input Container */
-            .whatsapp-container {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background-color: #1f2c34;
-                padding: 12px 20px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                z-index: 99999;
-                border-top: 1px solid #2a3942;
+            /* Force Streamlit footer/bottom spacing and lock whatsapp bar */
+            section.main > div:last-child { padding-bottom: 120px; }
+            .whatsapp-fixed-bar {
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                background-color: #1f2c34 !important;
+                padding: 12px 24px !important;
+                z-index: 999999 !important;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+                border-top: 1px: solid #2a3942;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -94,18 +93,17 @@ else:
         <style>
             .main { background-color: #f8f9fa; color: #000000; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
-            /* WhatsApp Style Fixed Bottom Input Container */
-            .whatsapp-container {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background-color: #f0f2f5;
-                padding: 12px 20px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                z-index: 99999;
+            /* Force Streamlit footer/bottom spacing and lock whatsapp bar */
+            section.main > div:last-child { padding-bottom: 120px; }
+            .whatsapp-fixed-bar {
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                background-color: #f0f2f5 !important;
+                padding: 12px 24px !important;
+                z-index: 999999 !important;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
                 border-top: 1px solid #e9edef;
             }
         </style>
@@ -271,7 +269,7 @@ if is_student:
 
         st.markdown("---")
 
-        # Display Chat History Normally with bottom padding so messages aren't hidden behind the bar
+        # Display Chat History Normally
         for message in st.session_state.student_messages:
             avatar = "🧕" if message["role"] == "user" else "🤖"
             with st.chat_message(message["role"], avatar=avatar):
@@ -285,25 +283,51 @@ if is_student:
                     except Exception:
                         pass
 
-        # Bottom space buffer
-        st.markdown("<br><br><br><br>", unsafe_allow_html=True)
+        # Callback function for processing input immediately on Enter key press
+        def submit_whatsapp_query():
+            q = st.session_state.whatsapp_input_field.strip()
+            if q:
+                st.session_state.student_messages.append({"role": "user", "content": q})
+                # Call AI response generation
+                if not client:
+                    ai_reply = "Error: Groq API Key missing."
+                else:
+                    try:
+                        formatted_msgs = [{"role": "system", "content": "You are a professional AI mentor for students under Ezitech Engineering Framework (AI-003). Guide with hints, never write full assignment code directly."}]
+                        for m in st.session_state.student_messages:
+                            formatted_msgs.append({"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]})
 
-        # WhatsApp Exact Layout Bar Container
-        st.markdown('<div class="whatsapp-container">', unsafe_allow_html=True)
-        col_input, col_mic = st.columns([10, 1])
+                        completion = client.chat.completions.create(
+                            model="llama-3.3-70b-versatile",
+                            messages=formatted_msgs,
+                            temperature=0.7,
+                            max_tokens=1024
+                        )
+                        ai_reply = completion.choices[0].message.content
+                    except Exception as e:
+                        ai_reply = f"Error: {e}"
+                st.session_state.student_messages.append({"role": "assistant", "content": ai_reply})
+                st.session_state.whatsapp_input_field = "" # Reset box
+
+        # WhatsApp Fixed Bottom Input Container via Markdown wrapper
+        st.markdown('<div class="whatsapp-fixed-bar">', unsafe_allow_html=True)
+        col_input, col_mic = st.columns([11, 1])
         
         with col_input:
-            text_prompt = st.text_input("Message input", placeholder="Type a message...", label_visibility="collapsed", key="whatsapp_text_input")
+            st.text_input(
+                "Type a message", 
+                placeholder="Type a message...", 
+                label_visibility="collapsed", 
+                key="whatsapp_input_field", 
+                on_change=submit_whatsapp_query
+            )
             
         with col_mic:
             audio_info = mic_recorder(start_prompt="🎙️", stop_prompt="⏹️", key='whatsapp_round_mic', format="webm")
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Determine user input source (Text or Real Transcribed Voice via Whisper)
-        prompt = None
-        if text_prompt:
-            prompt = text_prompt
-        elif audio_info and 'bytes' in audio_info:
+        # Handle Audio Transcription if recorded
+        if audio_info and 'bytes' in audio_info:
             audio_bytes = audio_info['bytes']
             if client and len(audio_bytes) > 0:
                 with st.spinner("Transcribing your voice..."):
@@ -326,47 +350,25 @@ if is_student:
                             os.remove(audio_file_path)
                             
                         if prompt:
-                            st.info(f"🎙️ Transcribed Voice: '{prompt}'")
-                        else:
-                            st.warning("Could not detect clear speech. Please try recording again.")
+                            st.session_state.student_messages.append({"role": "user", "content": prompt})
+                            try:
+                                formatted_msgs = [{"role": "system", "content": "You are a professional AI mentor for students under Ezitech Engineering Framework (AI-003). Guide with hints, never write full assignment code directly."}]
+                                for m in st.session_state.student_messages:
+                                    formatted_msgs.append({"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]})
+
+                                completion = client.chat.completions.create(
+                                    model="llama-3.3-70b-versatile",
+                                    messages=formatted_msgs,
+                                    temperature=0.7,
+                                    max_tokens=1024
+                                )
+                                ai_reply = completion.choices[0].message.content
+                            except Exception as e:
+                                ai_reply = f"Error: {e}"
+                            st.session_state.student_messages.append({"role": "assistant", "content": ai_reply})
+                            st.rerun()
                     except Exception as e:
                         st.error(f"Speech-to-Text Error: {e}")
-
-        if prompt:
-            st.session_state.student_messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user", avatar="🧕"):
-                st.write(prompt)
-
-            with st.chat_message("assistant", avatar="🤖"):
-                with st.spinner("Thinking..."):
-                    if not client:
-                        ai_reply = "Error: Groq API Key missing."
-                    else:
-                        try:
-                            formatted_msgs = [{"role": "system", "content": "You are a professional AI mentor for students under Ezitech Engineering Framework (AI-003). Guide with hints, never write full assignment code directly."}]
-                            for m in st.session_state.student_messages:
-                                formatted_msgs.append({"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]})
-
-                            completion = client.chat.completions.create(
-                                model="llama-3.3-70b-versatile",
-                                messages=formatted_msgs,
-                                temperature=0.7,
-                                max_tokens=1024
-                            )
-                            ai_reply = completion.choices[0].message.content
-                        except Exception as e:
-                            ai_reply = f"Error: {e}"
-                    st.write(ai_reply)
-                    
-                    try:
-                        tts = gTTS(text=ai_reply, lang='en')
-                        fp = BytesIO()
-                        tts.write_to_fp(fp)
-                        st.audio(fp.getvalue(), format='audio/mp3')
-                    except Exception:
-                        pass
-                        
-            st.session_state.student_messages.append({"role": "assistant", "content": ai_reply})
 
     elif st.session_state.nav_option == "Task & Progress Tracker":
         st.header("📋 Real Database Task & Progress Tracker")
