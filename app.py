@@ -11,7 +11,7 @@ st.set_page_config(
     page_icon="🎓"
 )
 
-# 2. Initialize Session States (Including Language & Theme)
+# 2. Initialize Session States
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_role" not in st.session_state:
@@ -26,7 +26,7 @@ if "theme" not in st.session_state:
     st.session_state.theme = "Light"
 if "student_messages" not in st.session_state:
     st.session_state.student_messages = [
-        {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you today?"}
+        {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you with your case studies, Neo4j, or debugging concepts today?"}
     ]
 if "mentor_messages" not in st.session_state:
     st.session_state.mentor_messages = [
@@ -67,7 +67,7 @@ except Exception:
 if not api_key:
     api_key = os.environ.get("GROQ_API_KEY")
 
-# Initialize Groq Client
+# Initialize Groq Client (Using Llama 3.1 70B as requested in your 634-line setup)
 client = None
 if api_key:
     try:
@@ -130,7 +130,7 @@ if not st.session_state.logged_in:
                     
     st.stop()
 
-# 5. Sidebar Profile, Language, Theme & Navigation
+# 5. Sidebar Profile, Customization & Navigation
 with st.sidebar:
     st.markdown("💻 **Ezitech Ecosystem (EEF AI-003)**")
     
@@ -161,6 +161,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🧭 Navigation Menu")
     
+    # Strictly segregated navigation menus for Student and Mentor
     if st.session_state.user_role == "Student":
         nav_options = [
             "AI Chat Assistant" if st.session_state.language == "English" else "AI چیٹ اسسٹنٹ", 
@@ -187,14 +188,14 @@ with st.sidebar:
         st.session_state.logged_in = False
         st.rerun()
 
-# 6. Main Application Logic
+# 6. Main Application Logic (Completely Separate Dashboards)
 if st.session_state.user_role == "Student":
     # ------------------ STUDENT DASHBOARD ------------------
     is_eng = (st.session_state.language == "English")
     
     if st.session_state.nav_option in ["AI Chat Assistant", "AI چیٹ اسسٹنٹ"]:
-        st.header("💬 " + ("Student AI Mentor Assistant" if is_eng else "اسٹوڈنٹس AI مینٹور اسسٹنٹ"))
-        st.markdown("Get answers regarding internship guidelines, case studies, or debugging concepts." if is_eng else "انٹرنشپ کی رہنما خطوط، کیس اسٹڈیز، یا ڈیبگنگ کے بارے میں سوالات پوچھیں۔")
+        st.header("💬 " + ("Student AI Mentor Assistant (Llama 3.1 70B)" if is_eng else "اسٹوڈنٹس AI مینٹور اسسٹنٹ"))
+        st.markdown("Get answers regarding internship guidelines, Neo4j knowledge graphs, or debugging concepts." if is_eng else "انٹرنشپ کی رہنما خطوط، Neo4j، یا ڈیبگنگ کے بارے میں سوالات پوچھیں۔")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -232,7 +233,7 @@ if st.session_state.user_role == "Student":
                                 formatted_messages.append({"role": role, "content": m["content"]})
 
                             completion = client.chat.completions.create(
-                                model="llama-3.3-70b-versatile",
+                                model="llama-3.1-70b-versatile",
                                 messages=formatted_messages,
                                 temperature=0.7,
                                 max_tokens=1024
@@ -248,7 +249,7 @@ if st.session_state.user_role == "Student":
     elif st.session_state.nav_option in ["Task & Progress Tracker", "اسائنمنٹ اور پروگریس ٹریکر"]:
         st.header("📋 " + ("Task & Progress Tracker" if is_eng else "ٹاسک اور پروگریس ٹریکر"))
         df = pd.DataFrame({
-            "Case Study": ["AI-002 Code Reviewer", "AI-003 Mentor Assistant", "YOLOv8 LPR", "Parallel Computing"],
+            "Case Study": ["AI-013 Neo4j Knowledge Graph", "AI-003 Mentor Assistant", "YOLOv8 License Plate Detection", "Parallel Computing OpenMP"],
             "Milestone Status": ["Completed", "In Progress", "Pending", "Pending"],
             "Confidence Score": ["95%", "80%", "N/A", "N/A"]
         })
@@ -259,22 +260,22 @@ if st.session_state.user_role == "Student":
         st.info("AI generated insights based on performance." if is_eng else "کارکردگی کی بنیاد پر AI کی تیار کردہ رپورٹ۔")
         st.markdown("""
         * **Current Level:** Intermediate AI Engineer
-        * **Identified Skill Gap:** Advanced RAG Pipeline Optimization
-        * **Recommended Next Module:** Fine-tuning open-source LLMs
+        * **Identified Skill Gap:** Advanced RAG Pipeline Optimization & Neo4j Integration
+        * **Recommended Next Module:** Fine-tuning open-source LLMs using LoRA & HuggingFace
         """)
 
     elif st.session_state.nav_option in ["Resource Hub & Case Studies", "ریسورس ہب اور کیس اسٹڈیز"]:
         st.header("📚 " + ("Resource Hub & Case Studies" if is_eng else "ریسورس ہب اور کیس اسٹڈیز"))
         st.markdown("""
         * [Ezitech EEF Documentation](https://ezitech.org)
-        * [Case Study AI-003 Repository](https://github.com)
+        * [Case Study AI-003 Specifications Repository](https://github.com)
         """)
 
     elif st.session_state.nav_option in ["Code Debugging Sandbox", "کوڈ ڈیبگنگ سینڈ باکس"]:
         st.header("⚡ " + ("Code Debugging Sandbox" if is_eng else "کوڈ ڈیبگنگ سینڈ باکس"))
         st.text_area("Snippet Code" if is_eng else "کوڈ یہاں درج کریں", "print('Debugging session active')")
         if st.button("Analyze Code" if is_eng else "کوڈ کا تجزیہ کریں"):
-            st.success("AI Analysis: Code syntax is clean." if is_eng else "کوڈ بالکل درست ہے۔")
+            st.success("AI Analysis: Code syntax is clean. Ensure environment paths are set correctly." if is_eng else "کوڈ بالکل درست ہے۔ ماحولیاتی راستے (paths) چیک کریں۔")
 
 else:
     # ------------------ MENTOR DASHBOARD ------------------
