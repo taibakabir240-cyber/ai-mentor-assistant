@@ -349,9 +349,13 @@ if is_student:
 
     elif st.session_state.nav_option == "Code Debugging Sandbox":
         st.header("⚡ Code Debugging Sandbox")
-        st.text_area("Snippet Code", "print('Debugging session active')")
+        snippet_code = st.text_area("Snippet Code", "print('Debugging session active')")
         if st.button("Analyze Code"):
-            st.success("AI Analysis: Code syntax is clean. Ensure environment paths are set correctly.")
+            try:
+                compile(snippet_code, '<string>', 'exec')
+                st.success("AI Analysis: Code syntax is clean. Ensure environment paths are set correctly.")
+            except SyntaxError as e:
+                st.error(f"AI Syntax Error: {e}")
 
 else:
     # ==========================================
