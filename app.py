@@ -15,11 +15,10 @@ st.set_page_config(
     page_icon="🎓"
 )
 
-# 2. Database Initialization (SQLite for Real Permanent Storage)
+# 2. Database Initialization
 def init_db():
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-    # Users Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             email TEXT PRIMARY KEY,
@@ -28,7 +27,6 @@ def init_db():
             role TEXT NOT NULL
         )
     """)
-    # Student Tasks Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS student_tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +36,6 @@ def init_db():
             confidence TEXT NOT NULL
         )
     """)
-    # Insert default users if empty
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", ("taibakabir240@gmail.com", "123", "Taiba Kabir", "Student"))
@@ -70,28 +67,25 @@ if "student_messages" not in st.session_state:
         {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you with your case studies, Neo4j, or debugging concepts today?"}
     ]
 
-# Dynamic Theme & Fixed Bottom CSS Injection
+# WhatsApp Style & Theme Customization CSS
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
             .main { background-color: #0e1117; color: #ffffff; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
-            /* Force chat input and bottom area to stay fixed at the bottom */
-            [data-testid="stChatInput"] {
-                position: fixed;
-                bottom: 20px;
-                background-color: #0e1117;
-                z-index: 99999;
-            }
-            .fixed-bottom-bar {
+            /* WhatsApp Style Fixed Bottom Input Container */
+            .whatsapp-container {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 right: 0;
-                background-color: #0e1117;
-                padding: 10px 20px;
-                z-index: 99998;
-                border-top: 1px solid #333;
+                background-color: #1f2c34;
+                padding: 12px 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                z-index: 99999;
+                border-top: 1px solid #2a3942;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -100,22 +94,19 @@ else:
         <style>
             .main { background-color: #f8f9fa; color: #000000; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
-            /* Force chat input and bottom area to stay fixed at the bottom */
-            [data-testid="stChatInput"] {
-                position: fixed;
-                bottom: 20px;
-                background-color: #ffffff;
-                z-index: 99999;
-            }
-            .fixed-bottom-bar {
+            /* WhatsApp Style Fixed Bottom Input Container */
+            .whatsapp-container {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 right: 0;
-                background-color: #ffffff;
-                padding: 10px 20px;
-                z-index: 99998;
-                border-top: 1px solid #ddd;
+                background-color: #f0f2f5;
+                padding: 12px 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                z-index: 99999;
+                border-top: 1px solid #e9edef;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -267,7 +258,7 @@ is_eng = (st.session_state.language == "English")
 if is_student:
     if st.session_state.nav_option == "AI Chat Assistant":
         st.header("💬 Student AI Mentor Assistant & Voice Chat")
-        st.markdown("You can type your message or click the **Record** button right alongside to speak!")
+        st.markdown("Type your message or click the WhatsApp-style round mic button at the bottom to speak!")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -280,7 +271,7 @@ if is_student:
 
         st.markdown("---")
 
-        # Display Chat History Normally with bottom padding so messages aren't hidden under the fixed input bar
+        # Display Chat History Normally with bottom padding so messages aren't hidden behind the bar
         for message in st.session_state.student_messages:
             avatar = "🧕" if message["role"] == "user" else "🤖"
             with st.chat_message(message["role"], avatar=avatar):
@@ -294,18 +285,18 @@ if is_student:
                     except Exception:
                         pass
 
-        # Extra space at the bottom to ensure scrollability above the fixed bar
+        # Bottom space buffer
         st.markdown("<br><br><br><br>", unsafe_allow_html=True)
 
-        # WhatsApp-style side-by-side layout pinned strictly to the bottom via CSS container
-        st.markdown('<div class="fixed-bottom-bar">', unsafe_allow_html=True)
-        input_col, mic_col = st.columns([6, 1])
+        # WhatsApp Exact Layout Bar Container
+        st.markdown('<div class="whatsapp-container">', unsafe_allow_html=True)
+        col_input, col_mic = st.columns([10, 1])
         
-        with input_col:
-            text_prompt = st.chat_input("Ask your AI mentor or type a message...")
+        with col_input:
+            text_prompt = st.text_input("Message input", placeholder="Type a message...", label_visibility="collapsed", key="whatsapp_text_input")
             
-        with mic_col:
-            audio_info = mic_recorder(start_prompt="🎙️", stop_prompt="⏹️", key='whatsapp_style_mic')
+        with col_mic:
+            audio_info = mic_recorder(start_prompt="🎙️", stop_prompt="⏹️", key='whatsapp_round_mic', format="webm")
         st.markdown('</div>', unsafe_allow_html=True)
 
         # Determine user input source (Text or Real Transcribed Voice via Whisper)
