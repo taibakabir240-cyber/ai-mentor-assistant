@@ -67,7 +67,7 @@ except Exception:
 if not api_key:
     api_key = os.environ.get("GROQ_API_KEY")
 
-# Initialize Groq Client (Using Llama 3.1 70B as requested in your 634-line setup)
+# Initialize Groq Client
 client = None
 if api_key:
     try:
@@ -161,7 +161,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🧭 Navigation Menu")
     
-    # Strictly segregated navigation menus for Student and Mentor
+    # Segregated navigation menus for Student and Mentor
     if st.session_state.user_role == "Student":
         nav_options = [
             "AI Chat Assistant" if st.session_state.language == "English" else "AI چیٹ اسسٹنٹ", 
@@ -188,13 +188,13 @@ with st.sidebar:
         st.session_state.logged_in = False
         st.rerun()
 
-# 6. Main Application Logic (Completely Separate Dashboards)
+# 6. Main Application Logic (Separate Dashboards)
 if st.session_state.user_role == "Student":
     # ------------------ STUDENT DASHBOARD ------------------
     is_eng = (st.session_state.language == "English")
     
     if st.session_state.nav_option in ["AI Chat Assistant", "AI چیٹ اسسٹنٹ"]:
-        st.header("💬 " + ("Student AI Mentor Assistant (Llama 3.1 70B)" if is_eng else "اسٹوڈنٹس AI مینٹور اسسٹنٹ"))
+        st.header("💬 " + ("Student AI Mentor Assistant" if is_eng else "اسٹوڈنٹس AI مینٹور اسسٹنٹ"))
         st.markdown("Get answers regarding internship guidelines, Neo4j knowledge graphs, or debugging concepts." if is_eng else "انٹرنشپ کی رہنما خطوط، Neo4j، یا ڈیبگنگ کے بارے میں سوالات پوچھیں۔")
         
         col1, col2 = st.columns([1, 4])
@@ -233,7 +233,7 @@ if st.session_state.user_role == "Student":
                                 formatted_messages.append({"role": role, "content": m["content"]})
 
                             completion = client.chat.completions.create(
-                                model="llama-3.1-70b-versatile",
+                                model="mixtral-8x7b-32768",
                                 messages=formatted_messages,
                                 temperature=0.7,
                                 max_tokens=1024
@@ -261,7 +261,7 @@ if st.session_state.user_role == "Student":
         st.markdown("""
         * **Current Level:** Intermediate AI Engineer
         * **Identified Skill Gap:** Advanced RAG Pipeline Optimization & Neo4j Integration
-        * **Recommended Next Module:** Fine-tuning open-source LLMs using LoRA & HuggingFace
+        * **Recommended Next Module:** Fine-tuning open-source models using LoRA & HuggingFace
         """)
 
     elif st.session_state.nav_option in ["Resource Hub & Case Studies", "ریسورس ہب اور کیس اسٹڈیز"]:
