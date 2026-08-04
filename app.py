@@ -70,13 +70,22 @@ if "student_messages" not in st.session_state:
         {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you with your case studies, Neo4j, or debugging concepts today?"}
     ]
 
-# Dynamic Theme Custom CSS Styling (Including ChatGPT-style fixed bottom chat input styling)
+# Dynamic Theme Custom CSS Styling (Fixed Bottom Chat Container Styling)
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
             .main { background-color: #0e1117; color: #ffffff; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
-            div.stChatInput { position: fixed; bottom: 0px; background: #0e1117; padding-bottom: 20px; z-index: 100; }
+            .fixed-chat-container {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: #0e1117;
+                padding: 15px 20px;
+                z-index: 99999;
+                border-top: 1px solid #333;
+            }
         </style>
     """, unsafe_allow_html=True)
 else:
@@ -84,6 +93,16 @@ else:
         <style>
             .main { background-color: #f8f9fa; color: #000000; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
+            .fixed-chat-container {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: #ffffff;
+                padding: 15px 20px;
+                z-index: 99999;
+                border-top: 1px solid #ddd;
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -247,7 +266,7 @@ if is_student:
 
         st.markdown("---")
 
-        # Display Chat History (Leaving space at bottom for floating input bar)
+        # Display Chat History (With bottom spacing so content isn't hidden behind the fixed input bar)
         for message in st.session_state.student_messages:
             avatar = "🧕" if message["role"] == "user" else "🤖"
             with st.chat_message(message["role"], avatar=avatar):
@@ -261,19 +280,19 @@ if is_student:
                     except Exception:
                         pass
 
-        st.markdown("<br><br><br>", unsafe_allow_html=True)
+        st.markdown("<br><br><br><br>", unsafe_allow_html=True)
 
-        # ChatGPT-Style Fixed Bottom Controls for Text & Voice Input
-        with st.container():
-            st.markdown("---")
-            input_col, mic_col = st.columns([5, 1])
+        # ChatGPT-Style Fixed Bottom Container for Text & Voice Input
+        st.markdown('<div class="fixed-chat-container">', unsafe_allow_html=True)
+        input_col, mic_col = st.columns([5, 1])
+        
+        with input_col:
+            text_prompt = st.chat_input("Ask your AI mentor or type a message...", key="unique_chat_input_box")
             
-            with input_col:
-                text_prompt = st.chat_input("Ask your AI mentor or type a message...")
-                
-            with mic_col:
-                st.markdown("<p style='font-size: 11px; margin-bottom: 2px;'>Voice Note</p>", unsafe_allow_html=True)
-                audio_info = mic_recorder(start_prompt="🎙️ Record", stop_prompt="⏹️ Stop", key='chat_mic')
+        with mic_col:
+            st.markdown("<p style='font-size: 11px; margin-bottom: 0px;'>Voice Note</p>", unsafe_allow_html=True)
+            audio_info = mic_recorder(start_prompt="🎙️ Record", stop_prompt="⏹️ Stop", key='chat_mic')
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Determine user input source (Text or Real Transcribed Voice via Whisper)
         prompt = None
