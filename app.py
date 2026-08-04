@@ -49,9 +49,9 @@ if "logged_in" not in st.session_state:
 if "user_role" not in st.session_state:
     st.session_state.user_role = "Student"
 if "user_name" not in st.session_state:
-    st.session_state.user_name = ""
+    st.session_state.user_name = "Taiba Kabir"
 if "user_email" not in st.session_state:
-    st.session_state.user_email = ""
+    st.session_state.user_email = "taibakabir240@gmail.com"
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "Hello! I am your Ezitech AI Mentor & Student Assistant. How can I help you today?"}
@@ -76,8 +76,8 @@ if not st.session_state.logged_in:
         
         with auth_tab1:
             st.markdown("<br>", unsafe_allow_html=True)
-            login_email = st.text_input("Email Address", key="login_email_input")
-            login_pass = st.text_input("Password", type="password", key="login_pass_input")
+            login_email = st.text_input("Email Address", value="taibakabir240@gmail.com", key="login_email_input")
+            login_pass = st.text_input("Password", type="password", value="123", key="login_pass_input")
             st.markdown("<br>", unsafe_allow_html=True)
             
             if st.button("Login to Workspace", use_container_width=True, type="primary"):
@@ -147,7 +147,7 @@ with st.sidebar:
     st.markdown("---")
     if st.button("🚪 Logout / Sign Out", use_container_width=True, type="secondary"):
         st.session_state.logged_in = False
-        st.session_state.messages = [{"role": "assistant", "content": "Hello! I am your Ezitech AI Mentor & Student Assistant. How can I help you today?"}]
+        st.session_state.messages = [{"role": "assistant", "content": "Hello! I am your AI Assistant. How can I help you today?"}]
         st.rerun()
 
 # 6. Main Application Pages
