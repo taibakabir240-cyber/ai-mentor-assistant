@@ -70,12 +70,29 @@ if "student_messages" not in st.session_state:
         {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you with your case studies, Neo4j, or debugging concepts today?"}
     ]
 
-# Dynamic Theme Custom CSS Styling
+# Dynamic Theme & Fixed Bottom CSS Injection
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
             .main { background-color: #0e1117; color: #ffffff; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
+            /* Force chat input and bottom area to stay fixed at the bottom */
+            [data-testid="stChatInput"] {
+                position: fixed;
+                bottom: 20px;
+                background-color: #0e1117;
+                z-index: 99999;
+            }
+            .fixed-bottom-bar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: #0e1117;
+                padding: 10px 20px;
+                z-index: 99998;
+                border-top: 1px solid #333;
+            }
         </style>
     """, unsafe_allow_html=True)
 else:
@@ -83,6 +100,23 @@ else:
         <style>
             .main { background-color: #f8f9fa; color: #000000; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
+            /* Force chat input and bottom area to stay fixed at the bottom */
+            [data-testid="stChatInput"] {
+                position: fixed;
+                bottom: 20px;
+                background-color: #ffffff;
+                z-index: 99999;
+            }
+            .fixed-bottom-bar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background-color: #ffffff;
+                padding: 10px 20px;
+                z-index: 99998;
+                border-top: 1px solid #ddd;
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -233,7 +267,7 @@ is_eng = (st.session_state.language == "English")
 if is_student:
     if st.session_state.nav_option == "AI Chat Assistant":
         st.header("💬 Student AI Mentor Assistant & Voice Chat")
-        st.markdown("You can type your message or click the **Record** button right alongside the chat input to speak!")
+        st.markdown("You can type your message or click the **Record** button right alongside to speak!")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -246,7 +280,7 @@ if is_student:
 
         st.markdown("---")
 
-        # Display Chat History Normally
+        # Display Chat History Normally with bottom padding so messages aren't hidden under the fixed input bar
         for message in st.session_state.student_messages:
             avatar = "🧕" if message["role"] == "user" else "🤖"
             with st.chat_message(message["role"], avatar=avatar):
@@ -260,14 +294,19 @@ if is_student:
                     except Exception:
                         pass
 
-        # WhatsApp-style side-by-side layout for Chat Input and Voice Recorder at the bottom
-        input_col, mic_col = st.columns([5, 1])
+        # Extra space at the bottom to ensure scrollability above the fixed bar
+        st.markdown("<br><br><br><br>", unsafe_allow_html=True)
+
+        # WhatsApp-style side-by-side layout pinned strictly to the bottom via CSS container
+        st.markdown('<div class="fixed-bottom-bar">', unsafe_allow_html=True)
+        input_col, mic_col = st.columns([6, 1])
         
         with input_col:
             text_prompt = st.chat_input("Ask your AI mentor or type a message...")
             
         with mic_col:
             audio_info = mic_recorder(start_prompt="🎙️", stop_prompt="⏹️", key='whatsapp_style_mic')
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Determine user input source (Text or Real Transcribed Voice via Whisper)
         prompt = None
