@@ -233,7 +233,7 @@ is_eng = (st.session_state.language == "English")
 if is_student:
     if st.session_state.nav_option == "AI Chat Assistant":
         st.header("💬 Student AI Mentor Assistant & Voice Chat")
-        st.markdown("Aap yahan text likh kar bhi baat kar sakte hain, ya phir **Voice Record** button se apni awaz record karke accurate response hasil kar sakte hain!")
+        st.markdown("You can type your message or use the **Voice Record** button next to the input box to speak and get instant AI responses!")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -282,7 +282,6 @@ if is_student:
             if client and len(audio_bytes) > 0:
                 with st.spinner("Transcribing your voice..."):
                     try:
-                        # Save temporary audio file for transcription
                         audio_file_path = "temp_audio.wav"
                         with open(audio_file_path, "wb") as f:
                             f.write(audio_bytes)
@@ -291,13 +290,12 @@ if is_student:
                             transcription = client.audio.transcriptions.create(
                                 file=(audio_file_path, file.read()),
                                 model="whisper-large-v3",
-                                prompt="Specify context or leave blank",
+                                language="en",  # Set language explicitly to avoid hallucination/mixing
                                 response_format="text",
                                 temperature=0.0
                             )
                         prompt = transcription.strip()
                         
-                        # Cleanup temp file
                         if os.path.exists(audio_file_path):
                             os.remove(audio_file_path)
                             
@@ -334,7 +332,6 @@ if is_student:
                             ai_reply = f"Error: {e}"
                     st.write(ai_reply)
                     
-                    # Audio playback of AI response
                     try:
                         tts = gTTS(text=ai_reply, lang='en')
                         fp = BytesIO()
@@ -419,9 +416,6 @@ if is_student:
                 st.error(f"AI Syntax Error: {e}")
 
 else:
-    # ==========================================
-    # 👨‍🏫 MENTOR INTELLIGENCE PORTAL
-    # ==========================================
     if st.session_state.nav_option == "Mentor Intelligence Dashboard":
         st.header("📊 Mentor Intelligence Dashboard")
         col1, col2, col3 = st.columns(3)
