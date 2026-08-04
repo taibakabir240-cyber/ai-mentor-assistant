@@ -8,6 +8,7 @@ from io import BytesIO
 from gtts import gTTS
 from streamlit_mic_recorder import mic_recorder
 from PIL import Image
+import base64
 
 # 1. Page Configuration
 st.set_page_config(
@@ -188,17 +189,16 @@ if not st.session_state.logged_in:
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Ezitech Logo & Header Layout
-        logo_col1, logo_col2 = st.columns([1, 6])
-        with logo_col1:
-            if os.path.exists("ezitech_logo.png"):
-                st.image("ezitech_logo.png", width=60)
-            else:
-                st.markdown("<div style='font-size: 38px; text-align: right;'>🎓</div>", unsafe_allow_html=True)
-        with logo_col2:
-            st.markdown("<h1 style='color: #1e3c72; margin: 0; padding-top: 5px; font-size: 28px;'>Welcome to Ezitech AI Portal</h1>", unsafe_allow_html=True)
-            
-        st.markdown("<p style='text-align: center; color: #666; margin-top: 5px;'>AI Mentor Assistant & Internship Intelligence Platform</p>", unsafe_allow_html=True)
+        # Ezitech Logo & Header Layout (Balanced Sizing)
+        st.markdown("""
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 0px;">
+                <div style="background-color: #1976d2; border-radius: 12px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <span style="color: white; font-weight: bold; font-size: 26px; font-family: sans-serif;">EY</span>
+                </div>
+                <h1 style="color: #1e3c72; margin: 0; font-size: 26px; font-weight: 700;">Welcome to Ezitech AI Portal</h1>
+            </div>
+            <p style="text-align: center; color: #666; margin-top: 6px; font-size: 14px;">AI Mentor Assistant & Internship Intelligence Platform</p>
+        """, unsafe_allow_html=True)
         
         auth_tab1, auth_tab2 = st.tabs(["🔐 Login", "📝 Sign Up"])
         
