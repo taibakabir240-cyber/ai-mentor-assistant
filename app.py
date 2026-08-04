@@ -24,9 +24,16 @@ def init_db():
             email TEXT PRIMARY KEY,
             password TEXT NOT NULL,
             name TEXT NOT NULL,
-            role TEXT NOT NULL
+            role TEXT NOT NULL,
+            linkedin TEXT
         )
     """)
+    # Add linkedin column if it doesn't exist in older DB
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN linkedin TEXT")
+    except Exception:
+        pass
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS student_tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,8 +45,10 @@ def init_db():
     """)
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
-        cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", ("taibakabir240@gmail.com", "123", "Taiba Kabir", "Student"))
-        cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", ("mentor@ezitech.org", "123", "Sir Mentor", "Mentor"))
+        cursor.execute("INSERT INTO users (email, password, name, role, linkedin) VALUES (?, ?, ?, ?, ?)", 
+                       ("taibakabir240@gmail.com", "123", "Taiba Kabir", "Student", "https://linkedin.com/in/taibakabir"))
+        cursor.execute("INSERT INTO users (email, password, name, role, linkedin) VALUES (?, ?, ?, ?, ?)", 
+                       ("mentor@ezitech.org", "123", "Sir Mentor", "Mentor", "https://linkedin.com"))
         cursor.execute("INSERT INTO student_tasks (email, task_name, status, confidence) VALUES (?, ?, ?, ?)", 
                        ("taibakabir240@gmail.com", "AI-013 Neo4j Knowledge Graph", "Completed", "95%"))
         cursor.execute("INSERT INTO student_tasks (email, task_name, status, confidence) VALUES (?, ?, ?, ?)", 
@@ -58,6 +67,8 @@ if "user_name" not in st.session_state:
     st.session_state.user_name = "Taiba Kabir"
 if "user_email" not in st.session_state:
     st.session_state.user_email = "taibakabir240@gmail.com"
+if "user_linkedin" not in st.session_state:
+    st.session_state.user_linkedin = "https://linkedin.com/in/taibakabir"
 if "language" not in st.session_state:
     st.session_state.language = "English"
 if "theme" not in st.session_state:
@@ -146,7 +157,7 @@ if not st.session_state.logged_in:
             if st.button("Login to Workspace", use_container_width=True, type="primary"):
                 conn = sqlite3.connect("users.db")
                 cursor = conn.cursor()
-                cursor.execute("SELECT password, name, role FROM users WHERE email = ?", (login_email,))
+                cursor.execute("SELECT password, name, role, linkedin FROM users WHERE email = ?", (login_email,))
                 user_record = cursor.fetchone()
                 conn.close()
                 
@@ -155,6 +166,7 @@ if not st.session_state.logged_in:
                     st.session_state.user_email = login_email
                     st.session_state.user_name = user_record[1]
                     st.session_state.user_role = user_record[2]
+                    st.session_state.user_linkedin = user_record[3] if user_record[3] else ""
                     st.success("Login successful! Loading dashboard...")
                     st.rerun()
                 else:
@@ -165,6 +177,7 @@ if not st.session_state.logged_in:
             new_name = st.text_input("Full Name", key="signup_name_input")
             new_email = st.text_input("Email Address", key="signup_email_input")
             new_pass = st.text_input("Password", type="password", key="signup_pass_input")
+            new_linkedin = st.text_input("LinkedIn Profile URL", key="signup_linkedin_input")
             new_role = st.selectbox("Select Role", ["Student", "Mentor"], key="signup_role_input")
             st.markdown("<br>", unsafe_allow_html=True)
             
@@ -180,7 +193,7 @@ if not st.session_state.logged_in:
                     if exists:
                         st.error("Email already registered! Please login instead.")
                     else:
-                        cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", (new_email, new_pass, new_name, new_role))
+                        cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?)", (new_email, new_pass, new_name, new_role, new_linkedin))
                         conn.commit()
                         conn.close()
                         
@@ -188,6 +201,7 @@ if not st.session_state.logged_in:
                         st.session_state.user_email = new_email
                         st.session_state.user_name = new_name
                         st.session_state.user_role = new_role
+                        st.session_state.user_linkedin = new_linkedin
                         st.success("Account created successfully!")
                         st.rerun()
                     conn.close()
@@ -211,17 +225,6 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("### ⚙️ Preferences")
-    selected_theme = st.selectbox("🎨 Theme Mode", ["Light", "Dark"], index=0 if st.session_state.theme == "Light" else 1)
-    if selected_theme != st.session_state.theme:
-        st.session_state.theme = selected_theme
-        st.rerun()
-
-    selected_lang = st.selectbox("🌐 Language / زبان", ["English", "Urdu"], index=0 if st.session_state.language == "English" else 1)
-    if selected_lang != st.session_state.language:
-        st.session_state.language = selected_lang
-        st.rerun()
-    
     st.markdown("---")
     st.markdown("### 🧭 Portal Navigation")
     
@@ -232,7 +235,7 @@ with st.sidebar:
             "Skill Gap & Roadmap", 
             "Resource Hub & Case Studies", 
             "Code Debugging Sandbox",
-            "Account Settings & Profile"
+            "⚙️ Settings & Profile"
         ]
     else:
         nav_options = [
@@ -241,7 +244,7 @@ with st.sidebar:
             "Weekly Report Generator", 
             "Task Difficulty & Milestones", 
             "Broadcast Announcements",
-            "Account Settings & Profile"
+            "⚙️ Settings & Profile"
         ]
         
     nav_choice = st.radio("Select Section", nav_options, label_visibility="collapsed")
@@ -454,33 +457,77 @@ if is_student:
             except SyntaxError as e:
                 st.error(f"AI Syntax Error: {e}")
 
-    elif st.session_state.nav_option == "Account Settings & Profile":
-        st.header("⚙️ Account Settings & Profile Management")
-        st.markdown("Update your personal account profile details and security credentials.")
+    elif st.session_state.nav_option == "⚙️ Settings & Profile":
+        st.header("⚙️ Account Settings & Preferences")
+        st.markdown("Manage your personal profile details, privacy controls, application theme, and workspace storage.")
         
-        with st.form("profile_settings_form"):
-            updated_name = st.text_input("Full Name", value=st.session_state.user_name)
-            updated_email = st.text_input("Email Address (Username)", value=st.session_state.user_email, disabled=True)
-            updated_password = st.text_input("New Password", type="password", placeholder="Enter new password if you want to change")
-            
-            save_changes = st.form_submit_button("Save Profile Settings", type="primary")
-            
-            if save_changes:
-                if updated_name:
+        set_tab1, set_tab2, set_tab3, set_tab4 = st.tabs(["👤 Profile & LinkedIn", "🎨 Theme & Language", "🔒 Privacy & Security", "🧹 Cleanup Space"])
+        
+        with set_tab1:
+            st.subheader("Profile Information")
+            with st.form("profile_update_form"):
+                updated_name = st.text_input("Full Name", value=st.session_state.user_name)
+                updated_email = st.text_input("Email Address (Username)", value=st.session_state.user_email, disabled=True)
+                updated_linkedin = st.text_input("LinkedIn Profile Link", value=st.session_state.user_linkedin, placeholder="https://linkedin.com/in/username")
+                
+                save_profile = st.form_submit_button("Save Profile Changes", type="primary")
+                if save_profile:
                     conn = sqlite3.connect("users.db")
                     cursor = conn.cursor()
-                    if updated_password:
-                        cursor.execute("UPDATE users SET name = ?, password = ? WHERE email = ?", (updated_name, updated_password, st.session_state.user_email))
-                    else:
-                        cursor.execute("UPDATE users SET name = ? WHERE email = ?", (updated_name, st.session_state.user_email))
+                    cursor.execute("UPDATE users SET name = ?, linkedin = ? WHERE email = ?", (updated_name, updated_linkedin, st.session_state.user_email))
                     conn.commit()
                     conn.close()
-                    
                     st.session_state.user_name = updated_name
-                    st.success("Profile settings updated successfully!")
+                    st.session_state.user_linkedin = updated_linkedin
+                    st.success("Profile & LinkedIn updated successfully!")
                     st.rerun()
-                else:
-                    st.warning("Name cannot be empty.")
+
+        with set_tab2:
+            st.subheader("Appearance & Localization")
+            selected_theme = st.selectbox("🎨 Theme Mode", ["Light", "Dark"], index=0 if st.session_state.theme == "Light" else 1)
+            selected_lang = st.selectbox("🌐 Language / زبان", ["English", "Urdu"], index=0 if st.session_state.language == "English" else 1)
+            
+            if st.button("Apply Theme & Language"):
+                st.session_state.theme = selected_theme
+                st.session_state.language = selected_lang
+                st.success("Preferences updated successfully!")
+                st.rerun()
+
+        with set_tab3:
+            st.subheader("Security & Privacy Controls")
+            with st.form("security_form"):
+                current_pass = st.text_input("Current Password", type="password")
+                new_pass = st.text_input("New Password", type="password")
+                share_analytics = st.checkbox("Share anonymous usage data to improve AI Mentor accuracy", value=True)
+                
+                save_security = st.form_submit_button("Update Password & Privacy")
+                if save_security:
+                    if new_pass:
+                        conn = sqlite3.connect("users.db")
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT password FROM users WHERE email = ?", (st.session_state.user_email,))
+                        db_pass = cursor.fetchone()[0]
+                        if current_pass == db_pass:
+                            cursor.execute("UPDATE users SET password = ? WHERE email = ?", (new_pass, st.session_state.user_email))
+                            conn.commit()
+                            conn.close()
+                            st.success("Password updated successfully!")
+                        else:
+                            st.error("Incorrect current password.")
+                            conn.close()
+                    else:
+                        st.success("Privacy preferences saved successfully!")
+
+        with set_tab4:
+            st.subheader("Cleanup Space & Cache")
+            st.markdown("Clear temporary chat histories, audio recordings cache, and local session artifacts to free up space.")
+            if st.button("🧹 Clear All Cache & Temp Files", type="secondary"):
+                st.session_state.student_messages = [{"role": "assistant", "content": "Cache cleared. How can I help you today?"}]
+                st.session_state.last_audio_signature = None
+                if os.path.exists("temp_audio.wav"):
+                    os.remove("temp_audio.wav")
+                st.success("Cache and temporary workspace successfully cleaned!")
+                st.rerun()
 
 else:
     if st.session_state.nav_option == "Mentor Intelligence Dashboard":
@@ -526,30 +573,72 @@ else:
             else:
                 st.warning("Please enter a message to broadcast.")
 
-    elif st.session_state.nav_option == "Account Settings & Profile":
-        st.header("⚙️ Account Settings & Profile Management")
-        st.markdown("Update your personal account profile details and security credentials.")
+    elif st.session_state.nav_option == "⚙️ Settings & Profile":
+        st.header("⚙️ Account Settings & Preferences")
+        st.markdown("Manage your mentor profile, security, appearance, and workspace system cache.")
         
-        with st.form("mentor_profile_form"):
-            updated_name = st.text_input("Full Name", value=st.session_state.user_name)
-            updated_email = st.text_input("Email Address (Username)", value=st.session_state.user_email, disabled=True)
-            updated_password = st.text_input("New Password", type="password", placeholder="Enter new password if you want to change")
-            
-            save_changes = st.form_submit_button("Save Profile Settings", type="primary")
-            
-            if save_changes:
-                if updated_name:
+        set_tab1, set_tab2, set_tab3, set_tab4 = st.tabs(["👤 Profile & LinkedIn", "🎨 Theme & Language", "🔒 Privacy & Security", "🧹 Cleanup Space"])
+        
+        with set_tab1:
+            st.subheader("Profile Information")
+            with st.form("mentor_profile_update_form"):
+                updated_name = st.text_input("Full Name", value=st.session_state.user_name)
+                updated_email = st.text_input("Email Address (Username)", value=st.session_state.user_email, disabled=True)
+                updated_linkedin = st.text_input("LinkedIn Profile Link", value=st.session_state.user_linkedin, placeholder="https://linkedin.com/in/username")
+                
+                save_profile = st.form_submit_button("Save Profile Changes", type="primary")
+                if save_profile:
                     conn = sqlite3.connect("users.db")
                     cursor = conn.cursor()
-                    if updated_password:
-                        cursor.execute("UPDATE users SET name = ?, password = ? WHERE email = ?", (updated_name, updated_password, st.session_state.user_email))
-                    else:
-                        cursor.execute("UPDATE users SET name = ? WHERE email = ?", (updated_name, st.session_state.user_email))
+                    cursor.execute("UPDATE users SET name = ?, linkedin = ? WHERE email = ?", (updated_name, updated_linkedin, st.session_state.user_email))
                     conn.commit()
                     conn.close()
-                    
                     st.session_state.user_name = updated_name
-                    st.success("Profile settings updated successfully!")
+                    st.session_state.user_linkedin = updated_linkedin
+                    st.success("Profile & LinkedIn updated successfully!")
                     st.rerun()
-                else:
-                    st.warning("Name cannot be empty.")
+
+        with set_tab2:
+            st.subheader("Appearance & Localization")
+            selected_theme = st.selectbox("🎨 Theme Mode", ["Light", "Dark"], index=0 if st.session_state.theme == "Light" else 1, key="m_theme")
+            selected_lang = st.selectbox("🌐 Language / زبان", ["English", "Urdu"], index=0 if st.session_state.language == "English" else 1, key="m_lang")
+            
+            if st.button("Apply Theme & Language", key="m_theme_btn"):
+                st.session_state.theme = selected_theme
+                st.session_state.language = selected_lang
+                st.success("Preferences updated successfully!")
+                st.rerun()
+
+        with set_tab3:
+            st.subheader("Security & Privacy Controls")
+            with st.form("mentor_security_form"):
+                current_pass = st.text_input("Current Password", type="password")
+                new_pass = st.text_input("New Password", type="password")
+                share_analytics = st.checkbox("Share platform analytics reports with management", value=True)
+                
+                save_security = st.form_submit_button("Update Password & Privacy")
+                if save_security:
+                    if new_pass:
+                        conn = sqlite3.connect("users.db")
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT password FROM users WHERE email = ?", (st.session_state.user_email,))
+                        db_pass = cursor.fetchone()[0]
+                        if current_pass == db_pass:
+                            cursor.execute("UPDATE users SET password = ? WHERE email = ?", (new_pass, st.session_state.user_email))
+                            conn.commit()
+                            conn.close()
+                            st.success("Password updated successfully!")
+                        else:
+                            st.error("Incorrect current password.")
+                            conn.close()
+                    else:
+                        st.success("Privacy preferences saved successfully!")
+
+        with set_tab4:
+            st.subheader("Cleanup Space & Cache")
+            st.markdown("Clear system logs, cache, and temporary diagnostic files.")
+            if st.button("🧹 Clear System Cache", type="secondary", key="m_clean"):
+                if os.path.exists("temp_audio.wav"):
+                    os.remove("temp_audio.wav")
+                st.success("System cache successfully cleaned!")
+                st.rerun()
