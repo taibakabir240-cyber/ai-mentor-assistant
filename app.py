@@ -26,7 +26,7 @@ if "user_email" not in st.session_state:
 if "user_linkedin" not in st.session_state:
     st.session_state.user_linkedin = "https://linkedin.com/in/taibakabir"
 
-# Load default profile image or user custom image
+# Load default profile image if exists locally or use fallback
 if "profile_image" not in st.session_state:
     default_img_path = "WhatsApp Image 2026-08-03 at 12.06.06 PM.jpeg"
     if os.path.exists(default_img_path):
@@ -261,7 +261,7 @@ with st.sidebar:
     is_student = (st.session_state.user_role == "Student")
     role_color = "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" if is_student else "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
     
-    # Display Profile Image (Fixed default or custom uploaded)
+    # Display Profile Picture (Defaults to the custom image or user uploaded image)
     if st.session_state.profile_image:
         col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
         with col_img2:
@@ -343,7 +343,7 @@ with st.sidebar:
 
 # 8. Main Professional Navigation & Dashboards Logic
 if is_student:
-    heading_title = "🚀 طالب علم کا ورک اسپیس ڈ্যাশবورد" if is_urdu else "🚀 Student Workspace Dashboard"
+    heading_title = "🚀 طالب علم کا ورک اسپیس ڈ্যাশবোর্ড" if is_urdu else "🚀 Student Workspace Dashboard"
     st.markdown(f"## {heading_title}")
     
     tab_labels = [
@@ -363,7 +363,7 @@ if is_student:
         with col1:
             clear_lbl = "🗑️ چیٹ صاف کریں" if is_urdu else "🗑️ Clear Chat"
             if st.button(clear_lbl):
-                st.session_state.student_messages = [{"role": "assistant", "content": "چیٹ ہسٹری صاف کر دی گئی ہے۔" if is_urdu else "Chat history cleared."}]
+                st.session_state.student_messages = [{"role": "assistant", "content": "چیٹ ہسٹری صاف कर دی گئی ہے۔" if is_urdu else "Chat history cleared."}]
                 st.session_state.last_audio_signature = None
                 st.rerun()
         with col2:
