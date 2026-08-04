@@ -11,7 +11,7 @@ from PIL import Image
 
 # 1. Page Configuration
 st.set_page_config(
-    page_title="Ezitech AI Mentor & Student Assistant",
+    page_title="Ezitech AI Portal",
     layout="wide",
     page_icon="🎓"
 )
@@ -82,12 +82,21 @@ if "student_messages" not in st.session_state:
 if "last_audio_signature" not in st.session_state:
     st.session_state.last_audio_signature = None
 
-# Anti-blink & Centered Profile CSS
+# Theme & Centered Profile CSS with Blue Primary Buttons Override
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
             .main { background-color: #0e1117; color: #ffffff; }
-            .stButton>button { border-radius: 8px; font-weight: 600; }
+            .stButton>button[kind="primary"] { 
+                background-color: #1e3c72 !important; 
+                color: white !important; 
+                border: none !important;
+                border-radius: 8px; 
+                font-weight: 600; 
+            }
+            .stButton>button[kind="primary"]:hover { 
+                background-color: #2a5298 !important; 
+            }
             section.main > div:last-child { padding-bottom: 120px; }
             
             [data-testid="stSidebar"] img {
@@ -118,7 +127,16 @@ else:
     st.markdown("""
         <style>
             .main { background-color: #f8f9fa; color: #000000; }
-            .stButton>button { border-radius: 8px; font-weight: 600; }
+            .stButton>button[kind="primary"] { 
+                background-color: #1e3c72 !important; 
+                color: white !important; 
+                border: none !important;
+                border-radius: 8px; 
+                font-weight: 600; 
+            }
+            .stButton>button[kind="primary"]:hover { 
+                background-color: #2a5298 !important; 
+            }
             section.main > div:last-child { padding-bottom: 120px; }
             
             [data-testid="stSidebar"] img {
@@ -169,8 +187,18 @@ if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #1e3c72;'>🎓 Ezitech AI-003 Portal</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #666;'>AI Mentor Assistant & Internship Intelligence Platform</p>", unsafe_allow_html=True)
+        
+        # Ezitech Logo & Header Layout
+        logo_col1, logo_col2 = st.columns([1, 6])
+        with logo_col1:
+            if os.path.exists("ezitech_logo.png"):
+                st.image("ezitech_logo.png", width=60)
+            else:
+                st.markdown("<div style='font-size: 38px; text-align: right;'>🎓</div>", unsafe_allow_html=True)
+        with logo_col2:
+            st.markdown("<h1 style='color: #1e3c72; margin: 0; padding-top: 5px; font-size: 28px;'>Welcome to Ezitech AI Portal</h1>", unsafe_allow_html=True)
+            
+        st.markdown("<p style='text-align: center; color: #666; margin-top: 5px;'>AI Mentor Assistant & Internship Intelligence Platform</p>", unsafe_allow_html=True)
         
         auth_tab1, auth_tab2 = st.tabs(["🔐 Login", "📝 Sign Up"])
         
@@ -288,7 +316,7 @@ with st.sidebar:
         if st.button("Apply Settings"):
             st.session_state.theme = selected_theme
             st.session_state.language = selected_lang
-            st.success("Applied!")
+            st.success("Theme and settings applied successfully!")
             st.rerun()
 
     with st.expander("🔒 Password & Privacy"):
