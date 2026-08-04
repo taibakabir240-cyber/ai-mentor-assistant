@@ -78,8 +78,8 @@ if "theme" not in st.session_state:
     st.session_state.theme = "Light"
 if "student_messages" not in st.session_state:
     st.session_state.student_messages = [
-        {"role": "assistant", "content": "Hello ! Welcome to your Ezitech AI Mentor Workspace. How can I assist you with your technical case studies, development frameworks, or debugging tasks today?"
-        }
+        {"role": "assistant", "content": "Hello dear! Welcome to your Ezitech AI Mentor Workspace . How can I assist you with your technical case studies, development frameworks, or debugging tasks today?"}
+    ]
 if "last_audio_signature" not in st.session_state:
     st.session_state.last_audio_signature = None
 
@@ -268,7 +268,7 @@ if not st.session_state.logged_in:
                     
     st.stop()
 
-# 6. Sidebar Profile & Settings Section (Fixed Image Upload Blinking)
+# 6. Sidebar Profile & Settings Section
 with st.sidebar:
     st.markdown("💻 **Developed by Taiba Kabir**")
     st.markdown("---")
@@ -369,7 +369,7 @@ if is_student:
     
     with nav_tabs[0]:
         st.header("Student AI Mentor Assistant & Voice Chat")
-        st.markdown("Type your message below or use the voice recording button for real-time audio interaction."")
+        st.markdown("Type your message below or use the voice recording button for real-time audio interaction.")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -406,7 +406,7 @@ if is_student:
                     try:
                         formatted_msgs = [{
                             "role": "system", 
-                            "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework . Give concise, direct answers and helpful guidance."
+                            "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework. Give concise, direct answers and helpful guidance."
                         }]
                         for m in st.session_state.student_messages:
                             formatted_msgs.append({"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]})
@@ -467,7 +467,7 @@ if is_student:
                             try:
                                 formatted_msgs = [{
                                     "role": "system", 
-                                    "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework. Give concise, direct answers and helpful guidance."
+                                    "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework . Give concise, direct answers and helpful guidance."
                                 }]
                                 for m in st.session_state.student_messages:
                                     formatted_msgs.append({"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]})
