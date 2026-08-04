@@ -233,7 +233,7 @@ is_eng = (st.session_state.language == "English")
 if is_student:
     if st.session_state.nav_option == "AI Chat Assistant":
         st.header("💬 Student AI Mentor Assistant & Voice Chat")
-        st.markdown("You can type your message or use the **Voice Record** button below to speak and get instant AI responses!")
+        st.markdown("You can type your message or click the **Record** button right alongside the chat input to speak!")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -260,16 +260,14 @@ if is_student:
                     except Exception:
                         pass
 
-        # Native Streamlit Chat Input (Automatically stays at bottom properly)
-        text_prompt = st.chat_input("Ask your AI mentor or type a message...")
+        # WhatsApp-style side-by-side layout for Chat Input and Voice Recorder at the bottom
+        input_col, mic_col = st.columns([5, 1])
         
-        # Optional Voice Recorder below input
-        st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-        col_mic_label, col_mic_btn = st.columns([4, 1])
-        with col_mic_label:
-            st.markdown("<p style='font-size: 13px; margin: 5px 0 0 0;'>Or record a Voice Note:</p>", unsafe_allow_html=True)
-        with col_mic_btn:
-            audio_info = mic_recorder(start_prompt="🎙️ Record", stop_prompt="⏹️ Stop", key='chat_mic')
+        with input_col:
+            text_prompt = st.chat_input("Ask your AI mentor or type a message...")
+            
+        with mic_col:
+            audio_info = mic_recorder(start_prompt="🎙️", stop_prompt="⏹️", key='whatsapp_style_mic')
 
         # Determine user input source (Text or Real Transcribed Voice via Whisper)
         prompt = None
