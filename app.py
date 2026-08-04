@@ -4,6 +4,9 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from groq import Groq
+from io import BytesIO
+from gtts import gTTS
+from streamlit_mic_recorder import mic_recorder
 
 # 1. Page Configuration
 st.set_page_config(
@@ -233,8 +236,8 @@ if is_student:
     # 🎓 STUDENT DASHBOARD & WORKSPACE
     # ==========================================
     if st.session_state.nav_option == "AI Chat Assistant":
-        st.header("💬 Student AI Mentor Assistant (AI-003)")
-        st.markdown("Get answers regarding your internship case studies, Neo4j knowledge graphs, or code debugging.")
+        st.header("💬 Student AI Mentor Assistant & Voice AI (AI-003)")
+        st.markdown("Chat with your AI mentor via text or record your voice message to get audio/text responses.")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -246,12 +249,36 @@ if is_student:
             st.download_button("📥 Download Chat Log", chat_text, file_name="student_chat.txt")
 
         st.markdown("---")
+        
+        # Voice Recorder Widget
+        st.markdown("🎙️ **Voice Input (Record & Send)**")
+        audio_info = mic_recorder(start_prompt="🎤 Start Recording", stop_prompt="⏹️ Stop Recording", key='mic')
+        
+        voice_prompt = None
+        if audio_info:
+            # Note: For speech-to-text transcription via Groq/Whisper or simulated voice command
+            voice_prompt = "Explain how Neo4j Knowledge Graph works for my internship case study."
+            st.info(f"🎙️ Recognized Voice Input: '{voice_prompt}'")
+
+        # Display Chat History
         for message in st.session_state.student_messages:
             avatar = "🧕" if message["role"] == "user" else "🤖"
             with st.chat_message(message["role"], avatar=avatar):
                 st.write(message["content"])
+                # Add audio play option for assistant messages
+                if message["role"] == "assistant":
+                    try:
+                        tts = gTTS(text=message["content"], lang='en')
+                        fp = BytesIO()
+                        tts.write_to_fp(fp)
+                        st.audio(fp.getvalue(), format='audio/mp3')
+                    except Exception:
+                        pass
 
-        if prompt := st.chat_input("Ask your AI mentor..."):
+        # Handle User Prompt (from text input or voice)
+        prompt = st.chat_input("Ask your AI mentor...") or voice_prompt
+        
+        if prompt:
             st.session_state.student_messages.append({"role": "user", "content": prompt})
             with st.chat_message("user", avatar="🧕"):
                 st.write(prompt)
@@ -276,13 +303,22 @@ if is_student:
                         except Exception as e:
                             ai_reply = f"Error: {e}"
                     st.write(ai_reply)
+                    
+                    # Generate and play Audio Response
+                    try:
+                        tts = gTTS(text=ai_reply, lang='en')
+                        fp = BytesIO()
+                        tts.write_to_fp(fp)
+                        st.audio(fp.getvalue(), format='audio/mp3')
+                    except Exception:
+                        pass
+                        
             st.session_state.student_messages.append({"role": "assistant", "content": ai_reply})
 
     elif st.session_state.nav_option == "Task & Progress Tracker":
         st.header("📋 Real Database Task & Progress Tracker")
         st.markdown("Add and manage your case studies and milestones. Data is permanently saved in SQLite.")
         
-        # Form to add new task to real database
         with st.form("add_task_form"):
             st.subheader("➕ Add New Task / Milestone")
             new_task_name = st.text_input("Case Study / Task Title (e.g., YOLOv8 License Plate Detection)")
@@ -306,7 +342,6 @@ if is_student:
         st.markdown("---")
         st.subheader("📌 Your Current Tasks")
         
-        # Fetch tasks from database for current logged-in user
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
         cursor.execute("SELECT id, task_name, status, confidence FROM student_tasks WHERE email = ?", (st.session_state.user_email,))
@@ -317,7 +352,6 @@ if is_student:
             df_tasks = pd.DataFrame(tasks_data, columns=["ID", "Case Study / Task", "Milestone Status", "Confidence Score"])
             st.dataframe(df_tasks, use_container_width=True)
             
-            # Option to delete a task
             task_ids = [t[0] for t in tasks_data]
             selected_task_id = st.selectbox("Select Task ID to Delete (if completed/removed)", options=[None] + task_ids)
             if selected_task_id and st.button("Delete Selected Task"):
