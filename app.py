@@ -70,22 +70,12 @@ if "student_messages" not in st.session_state:
         {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you with your case studies, Neo4j, or debugging concepts today?"}
     ]
 
-# Dynamic Theme Custom CSS Styling (Fixed Bottom Chat Container Styling)
+# Dynamic Theme Custom CSS Styling
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
             .main { background-color: #0e1117; color: #ffffff; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
-            .fixed-chat-container {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background-color: #0e1117;
-                padding: 15px 20px;
-                z-index: 99999;
-                border-top: 1px solid #333;
-            }
         </style>
     """, unsafe_allow_html=True)
 else:
@@ -93,16 +83,6 @@ else:
         <style>
             .main { background-color: #f8f9fa; color: #000000; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
-            .fixed-chat-container {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background-color: #ffffff;
-                padding: 15px 20px;
-                z-index: 99999;
-                border-top: 1px solid #ddd;
-            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -253,7 +233,7 @@ is_eng = (st.session_state.language == "English")
 if is_student:
     if st.session_state.nav_option == "AI Chat Assistant":
         st.header("💬 Student AI Mentor Assistant & Voice Chat")
-        st.markdown("You can type your message or use the **Voice Record** button at the bottom to speak and get instant AI responses!")
+        st.markdown("You can type your message or use the **Voice Record** button below to speak and get instant AI responses!")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -266,7 +246,7 @@ if is_student:
 
         st.markdown("---")
 
-        # Display Chat History (With bottom spacing so content isn't hidden behind the fixed input bar)
+        # Display Chat History Normally
         for message in st.session_state.student_messages:
             avatar = "🧕" if message["role"] == "user" else "🤖"
             with st.chat_message(message["role"], avatar=avatar):
@@ -280,19 +260,16 @@ if is_student:
                     except Exception:
                         pass
 
-        st.markdown("<br><br><br><br>", unsafe_allow_html=True)
-
-        # ChatGPT-Style Fixed Bottom Container for Text & Voice Input
-        st.markdown('<div class="fixed-chat-container">', unsafe_allow_html=True)
-        input_col, mic_col = st.columns([5, 1])
+        # Native Streamlit Chat Input (Automatically stays at bottom properly)
+        text_prompt = st.chat_input("Ask your AI mentor or type a message...")
         
-        with input_col:
-            text_prompt = st.chat_input("Ask your AI mentor or type a message...", key="unique_chat_input_box")
-            
-        with mic_col:
-            st.markdown("<p style='font-size: 11px; margin-bottom: 0px;'>Voice Note</p>", unsafe_allow_html=True)
+        # Optional Voice Recorder below input
+        st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+        col_mic_label, col_mic_btn = st.columns([4, 1])
+        with col_mic_label:
+            st.markdown("<p style='font-size: 13px; margin: 5px 0 0 0;'>Or record a Voice Note:</p>", unsafe_allow_html=True)
+        with col_mic_btn:
             audio_info = mic_recorder(start_prompt="🎙️ Record", stop_prompt="⏹️ Stop", key='chat_mic')
-        st.markdown('</div>', unsafe_allow_html=True)
 
         # Determine user input source (Text or Real Transcribed Voice via Whisper)
         prompt = None
