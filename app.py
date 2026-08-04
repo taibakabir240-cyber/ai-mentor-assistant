@@ -7,6 +7,7 @@ from groq import Groq
 from io import BytesIO
 from gtts import gTTS
 from streamlit_mic_recorder import mic_recorder
+from PIL import Image
 
 # 1. Page Configuration
 st.set_page_config(
@@ -28,7 +29,6 @@ def init_db():
             linkedin TEXT
         )
     """)
-    # Add linkedin column if it doesn't exist in older DB
     try:
         cursor.execute("ALTER TABLE users ADD COLUMN linkedin TEXT")
     except Exception:
@@ -69,6 +69,8 @@ if "user_email" not in st.session_state:
     st.session_state.user_email = "taibakabir240@gmail.com"
 if "user_linkedin" not in st.session_state:
     st.session_state.user_linkedin = "https://linkedin.com/in/taibakabir"
+if "profile_image" not in st.session_state:
+    st.session_state.profile_image = None
 if "language" not in st.session_state:
     st.session_state.language = "English"
 if "theme" not in st.session_state:
@@ -208,59 +210,104 @@ if not st.session_state.logged_in:
                     
     st.stop()
 
-# 6. Sidebar Profile & Navigation
+# 6. Sidebar Profile & Settings Section
 with st.sidebar:
     st.markdown("💻 **Developed by Taiba Kabir**")
+    st.markdown("---")
     
     is_student = (st.session_state.user_role == "Student")
     role_color = "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" if is_student else "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
-    avatar_icon = "🧕" if is_student else "👨‍🏫"
+    
+    # Display Profile Picture or Default Avatar Icon
+    if st.session_state.profile_image:
+        st.image(st.session_state.profile_image, width=100)
+    else:
+        avatar_icon = "🧕" if is_student else "👨‍🏫"
+        st.markdown(f"<div style='font-size: 50px; text-align: center;'>{avatar_icon}</div>", unsafe_allow_html=True)
     
     st.markdown(f"""
-        <div style="display: flex; flex-direction: column; align-items: center; background: {role_color}; padding: 20px; border-radius: 15px; color: white; text-align: center; margin-bottom: 20px;">
-            <div style="font-size: 50px; margin-bottom: 10px;">{avatar_icon}</div>
-            <h3 style="margin: 0; font-size: 18px;">{st.session_state.user_name}</h3>
-            <p style="margin: 5px 0 0 0; font-size: 11px; opacity: 0.9;">{st.session_state.user_email}</p>
-            <span style="background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 10px; font-size: 11px; margin-top: 8px;">Portal: {'Student Dashboard' if is_student else 'Mentor Portal'}</span>
+        <div style="background: {role_color}; padding: 15px; border-radius: 12px; color: white; text-align: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 16px;">{st.session_state.user_name}</h3>
+            <p style="margin: 3px 0 0 0; font-size: 11px; opacity: 0.9;">{st.session_state.user_email}</p>
+            <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 8px; font-size: 10px; margin-top: 5px; display:inline-block;">{'Student' if is_student else 'Mentor'}</span>
         </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("---")
-    st.markdown("### 🧭 Portal Navigation")
+    st.markdown("### ⚙️ Sidebar Settings & Profile")
     
-    if is_student:
-        nav_options = [
-            "AI Chat Assistant", 
-            "Task & Progress Tracker", 
-            "Skill Gap & Roadmap", 
-            "Resource Hub & Case Studies", 
-            "Code Debugging Sandbox",
-            "⚙️ Settings & Profile"
-        ]
-    else:
-        nav_options = [
-            "Mentor Intelligence Dashboard", 
-            "Struggling Interns Analytics", 
-            "Weekly Report Generator", 
-            "Task Difficulty & Milestones", 
-            "Broadcast Announcements",
-            "⚙️ Settings & Profile"
-        ]
-        
-    nav_choice = st.radio("Select Section", nav_options, label_visibility="collapsed")
-    st.session_state.nav_option = nav_choice
-    
+    with st.expander("👤 Edit Profile & Picture"):
+        uploaded_file = st.file_uploader("Upload Profile Picture", type=["png", "jpg", "jpeg"])
+        if uploaded_file:
+            img = Image.open(uploaded_file)
+            st.session_state.profile_image = img
+            st.success("Picture updated!")
+            st.rerun()
+            
+        new_name_sidebar = st.text_input("Update Name", value=st.session_state.user_name, key="sb_name")
+        new_li_sidebar = st.text_input("LinkedIn URL", value=st.session_state.user_linkedin, key="sb_li")
+        if st.button("Save Profile Info"):
+            st.session_state.user_name = new_name_sidebar
+            st.session_state.user_linkedin = new_li_sidebar
+            conn = sqlite3.connect("users.db")
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET name = ?, linkedin = ? WHERE email = ?", (new_name_sidebar, new_li_sidebar, st.session_state.user_email))
+            conn.commit()
+            conn.close()
+            st.success("Updated successfully!")
+            st.rerun()
+
+    with st.expander("🎨 Appearance & Language"):
+        selected_theme = st.selectbox("Theme Mode", ["Light", "Dark"], index=0 if st.session_state.theme == "Light" else 1, key="sb_theme")
+        selected_lang = st.selectbox("Language", ["English", "Urdu"], index=0 if st.session_state.language == "English" else 1, key="sb_lang")
+        if st.button("Apply Settings"):
+            st.session_state.theme = selected_theme
+            st.session_state.language = selected_lang
+            st.success("Applied!")
+            st.rerun()
+
+    with st.expander("🔒 Password & Privacy"):
+        pass_input = st.text_input("New Password", type="password", key="sb_pass")
+        priv_check = st.checkbox("Enable Privacy Mode", value=True, key="sb_priv")
+        if st.button("Update Security"):
+            if pass_input:
+                conn = sqlite3.connect("users.db")
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET password = ? WHERE email = ?", (pass_input, st.session_state.user_email))
+                conn.commit()
+                conn.close()
+                st.success("Password updated!")
+            else:
+                st.success("Privacy settings saved!")
+
+    with st.expander("🧹 Cleanup Space"):
+        if st.button("Clear Cache & Logs"):
+            st.session_state.student_messages = [{"role": "assistant", "content": "Cache cleared."}]
+            st.session_state.last_audio_signature = None
+            if os.path.exists("temp_audio.wav"):
+                os.remove("temp_audio.wav")
+            st.success("Workspace cleaned successfully!")
+            st.rerun()
+
     st.markdown("---")
     if st.button("🚪 Logout / Sign Out", use_container_width=True, type="secondary"):
         st.session_state.logged_in = False
         st.rerun()
 
-# 7. Isolated Dashboards Logic
+# 7. Main Professional Navigation & Dashboards Logic
 is_eng = (st.session_state.language == "English")
 
 if is_student:
-    if st.session_state.nav_option == "AI Chat Assistant":
-        st.header("💬 Student AI Mentor Assistant & Voice Chat")
+    st.markdown("## 🚀 Student Workspace Dashboard")
+    nav_tabs = st.tabs([
+        "💬 AI Chat Assistant", 
+        "📋 Task Tracker", 
+        "🗺️ Skill Roadmap", 
+        "📚 Resource Hub", 
+        "⚡ Code Sandbox"
+    ])
+    
+    with nav_tabs[0]:
+        st.header("Student AI Mentor Assistant & Voice Chat")
         st.markdown("Type your message or click the WhatsApp-style round mic button at the bottom to speak!")
         
         col1, col2 = st.columns([1, 4])
@@ -275,7 +322,6 @@ if is_student:
 
         st.markdown("---")
 
-        # Display Chat History Normally
         for message in st.session_state.student_messages:
             avatar = "🧕" if message["role"] == "user" else "🤖"
             with st.chat_message(message["role"], avatar=avatar):
@@ -289,7 +335,6 @@ if is_student:
                     except Exception:
                         pass
 
-        # Callback function for processing text input instantly on Enter
         def submit_whatsapp_query():
             q = st.session_state.whatsapp_input_field.strip()
             if q:
@@ -317,10 +362,8 @@ if is_student:
                 st.session_state.student_messages.append({"role": "assistant", "content": ai_reply})
                 st.session_state.whatsapp_input_field = ""
 
-        # WhatsApp Fixed Bottom Input Bar Container
         st.markdown('<div class="whatsapp-fixed-bar">', unsafe_allow_html=True)
         col_input, col_mic = st.columns([11, 1])
-        
         with col_input:
             st.text_input(
                 "Type a message", 
@@ -329,12 +372,10 @@ if is_student:
                 key="whatsapp_input_field", 
                 on_change=submit_whatsapp_query
             )
-            
         with col_mic:
             audio_info = mic_recorder(start_prompt="🎙️", stop_prompt="⏹️", key='whatsapp_round_mic', format="webm")
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Handle Audio Transcription safely without looping
         if audio_info and 'bytes' in audio_info:
             audio_bytes = audio_info['bytes']
             audio_sig = hash(audio_bytes) if audio_bytes else None
@@ -384,7 +425,7 @@ if is_student:
                     except Exception as e:
                         st.error(f"Speech-to-Text Error: {e}")
 
-    elif st.session_state.nav_option == "Task & Progress Tracker":
+    with nav_tabs[1]:
         st.header("📋 Real Database Task & Progress Tracker")
         with st.form("add_task_form"):
             st.subheader("➕ Add New Task / Milestone")
@@ -431,7 +472,7 @@ if is_student:
         else:
             st.info("No tasks found.")
 
-    elif st.session_state.nav_option == "Skill Gap & Roadmap":
+    with nav_tabs[2]:
         st.header("🗺️ Personalized Skill Gap & Roadmap")
         st.info("AI generated insights based on your recent performance.")
         st.markdown("""
@@ -440,14 +481,14 @@ if is_student:
         * **Recommended Next Module:** Fine-tuning open-source models using LoRA & HuggingFace
         """)
 
-    elif st.session_state.nav_option == "Resource Hub & Case Studies":
+    with nav_tabs[3]:
         st.header("📚 Resource Hub & Case Studies")
         st.markdown("""
         * [Ezitech EEF Documentation](https://ezitech.org)
         * [Case Study AI-003 Specifications Repository](https://github.com)
         """)
 
-    elif st.session_state.nav_option == "Code Debugging Sandbox":
+    with nav_tabs[4]:
         st.header("⚡ Code Debugging Sandbox")
         snippet_code = st.text_area("Snippet Code", "print('Debugging session active')")
         if st.button("Analyze Code"):
@@ -457,81 +498,17 @@ if is_student:
             except SyntaxError as e:
                 st.error(f"AI Syntax Error: {e}")
 
-    elif st.session_state.nav_option == "⚙️ Settings & Profile":
-        st.header("⚙️ Account Settings & Preferences")
-        st.markdown("Manage your personal profile details, privacy controls, application theme, and workspace storage.")
-        
-        set_tab1, set_tab2, set_tab3, set_tab4 = st.tabs(["👤 Profile & LinkedIn", "🎨 Theme & Language", "🔒 Privacy & Security", "🧹 Cleanup Space"])
-        
-        with set_tab1:
-            st.subheader("Profile Information")
-            with st.form("profile_update_form"):
-                updated_name = st.text_input("Full Name", value=st.session_state.user_name)
-                updated_email = st.text_input("Email Address (Username)", value=st.session_state.user_email, disabled=True)
-                updated_linkedin = st.text_input("LinkedIn Profile Link", value=st.session_state.user_linkedin, placeholder="https://linkedin.com/in/username")
-                
-                save_profile = st.form_submit_button("Save Profile Changes", type="primary")
-                if save_profile:
-                    conn = sqlite3.connect("users.db")
-                    cursor = conn.cursor()
-                    cursor.execute("UPDATE users SET name = ?, linkedin = ? WHERE email = ?", (updated_name, updated_linkedin, st.session_state.user_email))
-                    conn.commit()
-                    conn.close()
-                    st.session_state.user_name = updated_name
-                    st.session_state.user_linkedin = updated_linkedin
-                    st.success("Profile & LinkedIn updated successfully!")
-                    st.rerun()
-
-        with set_tab2:
-            st.subheader("Appearance & Localization")
-            selected_theme = st.selectbox("🎨 Theme Mode", ["Light", "Dark"], index=0 if st.session_state.theme == "Light" else 1)
-            selected_lang = st.selectbox("🌐 Language / زبان", ["English", "Urdu"], index=0 if st.session_state.language == "English" else 1)
-            
-            if st.button("Apply Theme & Language"):
-                st.session_state.theme = selected_theme
-                st.session_state.language = selected_lang
-                st.success("Preferences updated successfully!")
-                st.rerun()
-
-        with set_tab3:
-            st.subheader("Security & Privacy Controls")
-            with st.form("security_form"):
-                current_pass = st.text_input("Current Password", type="password")
-                new_pass = st.text_input("New Password", type="password")
-                share_analytics = st.checkbox("Share anonymous usage data to improve AI Mentor accuracy", value=True)
-                
-                save_security = st.form_submit_button("Update Password & Privacy")
-                if save_security:
-                    if new_pass:
-                        conn = sqlite3.connect("users.db")
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT password FROM users WHERE email = ?", (st.session_state.user_email,))
-                        db_pass = cursor.fetchone()[0]
-                        if current_pass == db_pass:
-                            cursor.execute("UPDATE users SET password = ? WHERE email = ?", (new_pass, st.session_state.user_email))
-                            conn.commit()
-                            conn.close()
-                            st.success("Password updated successfully!")
-                        else:
-                            st.error("Incorrect current password.")
-                            conn.close()
-                    else:
-                        st.success("Privacy preferences saved successfully!")
-
-        with set_tab4:
-            st.subheader("Cleanup Space & Cache")
-            st.markdown("Clear temporary chat histories, audio recordings cache, and local session artifacts to free up space.")
-            if st.button("🧹 Clear All Cache & Temp Files", type="secondary"):
-                st.session_state.student_messages = [{"role": "assistant", "content": "Cache cleared. How can I help you today?"}]
-                st.session_state.last_audio_signature = None
-                if os.path.exists("temp_audio.wav"):
-                    os.remove("temp_audio.wav")
-                st.success("Cache and temporary workspace successfully cleaned!")
-                st.rerun()
-
 else:
-    if st.session_state.nav_option == "Mentor Intelligence Dashboard":
-        st.header("📊 Mentor Intelligence Dashboard")
+    st.markdown("## 📊 Mentor Intelligence Dashboard")
+    mentor_tabs = st.tabs([
+        "📊 Overview", 
+        "⚠️ Struggling Interns", 
+        "📑 Reports", 
+        "⚙️ Milestones", 
+        "📢 Broadcast"
+    ])
+    
+    with mentor_tabs[0]:
         col1, col2, col3 = st.columns(3)
         col1.metric("Active Interns", "32")
         col2.metric("Completed Case Studies", "184")
@@ -544,7 +521,7 @@ else:
         })
         st.dataframe(mentor_df, use_container_width=True)
 
-    elif st.session_state.nav_option == "Struggling Interns Analytics":
+    with mentor_tabs[1]:
         st.header("⚠️ Struggling Interns Analytics")
         struggling_df = pd.DataFrame({
             "Intern Name": ["Ayesha Ahmed", "Zainab Malik"],
@@ -553,18 +530,18 @@ else:
         })
         st.dataframe(struggling_df, use_container_width=True)
 
-    elif st.session_state.nav_option == "Weekly Report Generator":
+    with mentor_tabs[2]:
         st.header("📑 Weekly Report Generator")
         if st.button("Generate Weekly Report"):
             st.success("Weekly progress report compiled successfully for all interns!")
 
-    elif st.session_state.nav_option == "Task Difficulty & Milestones":
+    with mentor_tabs[3]:
         st.header("⚙️ Task Difficulty Management")
         st.selectbox("Select Intern to Configure", ["Taiba Kabir", "Ali Khan", "Ayesha Ahmed"])
         if st.button("Update Roadmap & Milestones"):
             st.success("Intern roadmap updated successfully!")
 
-    elif st.session_state.nav_option == "Broadcast Announcements":
+    with mentor_tabs[4]:
         st.header("📢 Broadcast Announcements")
         announcement = st.text_area("Write broadcast message for all interns...")
         if st.button("Broadcast Now"):
@@ -572,73 +549,3 @@ else:
                 st.success("Announcement broadcasted successfully to all active dashboards!")
             else:
                 st.warning("Please enter a message to broadcast.")
-
-    elif st.session_state.nav_option == "⚙️ Settings & Profile":
-        st.header("⚙️ Account Settings & Preferences")
-        st.markdown("Manage your mentor profile, security, appearance, and workspace system cache.")
-        
-        set_tab1, set_tab2, set_tab3, set_tab4 = st.tabs(["👤 Profile & LinkedIn", "🎨 Theme & Language", "🔒 Privacy & Security", "🧹 Cleanup Space"])
-        
-        with set_tab1:
-            st.subheader("Profile Information")
-            with st.form("mentor_profile_update_form"):
-                updated_name = st.text_input("Full Name", value=st.session_state.user_name)
-                updated_email = st.text_input("Email Address (Username)", value=st.session_state.user_email, disabled=True)
-                updated_linkedin = st.text_input("LinkedIn Profile Link", value=st.session_state.user_linkedin, placeholder="https://linkedin.com/in/username")
-                
-                save_profile = st.form_submit_button("Save Profile Changes", type="primary")
-                if save_profile:
-                    conn = sqlite3.connect("users.db")
-                    cursor = conn.cursor()
-                    cursor.execute("UPDATE users SET name = ?, linkedin = ? WHERE email = ?", (updated_name, updated_linkedin, st.session_state.user_email))
-                    conn.commit()
-                    conn.close()
-                    st.session_state.user_name = updated_name
-                    st.session_state.user_linkedin = updated_linkedin
-                    st.success("Profile & LinkedIn updated successfully!")
-                    st.rerun()
-
-        with set_tab2:
-            st.subheader("Appearance & Localization")
-            selected_theme = st.selectbox("🎨 Theme Mode", ["Light", "Dark"], index=0 if st.session_state.theme == "Light" else 1, key="m_theme")
-            selected_lang = st.selectbox("🌐 Language / زبان", ["English", "Urdu"], index=0 if st.session_state.language == "English" else 1, key="m_lang")
-            
-            if st.button("Apply Theme & Language", key="m_theme_btn"):
-                st.session_state.theme = selected_theme
-                st.session_state.language = selected_lang
-                st.success("Preferences updated successfully!")
-                st.rerun()
-
-        with set_tab3:
-            st.subheader("Security & Privacy Controls")
-            with st.form("mentor_security_form"):
-                current_pass = st.text_input("Current Password", type="password")
-                new_pass = st.text_input("New Password", type="password")
-                share_analytics = st.checkbox("Share platform analytics reports with management", value=True)
-                
-                save_security = st.form_submit_button("Update Password & Privacy")
-                if save_security:
-                    if new_pass:
-                        conn = sqlite3.connect("users.db")
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT password FROM users WHERE email = ?", (st.session_state.user_email,))
-                        db_pass = cursor.fetchone()[0]
-                        if current_pass == db_pass:
-                            cursor.execute("UPDATE users SET password = ? WHERE email = ?", (new_pass, st.session_state.user_email))
-                            conn.commit()
-                            conn.close()
-                            st.success("Password updated successfully!")
-                        else:
-                            st.error("Incorrect current password.")
-                            conn.close()
-                    else:
-                        st.success("Privacy preferences saved successfully!")
-
-        with set_tab4:
-            st.subheader("Cleanup Space & Cache")
-            st.markdown("Clear system logs, cache, and temporary diagnostic files.")
-            if st.button("🧹 Clear System Cache", type="secondary", key="m_clean"):
-                if os.path.exists("temp_audio.wav"):
-                    os.remove("temp_audio.wav")
-                st.success("System cache successfully cleaned!")
-                st.rerun()
