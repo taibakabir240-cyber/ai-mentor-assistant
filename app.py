@@ -16,6 +16,7 @@ st.set_page_config(
 def init_db():
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
+    # Users Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             email TEXT PRIMARY KEY,
@@ -24,10 +25,26 @@ def init_db():
             role TEXT NOT NULL
         )
     """)
+    # Student Tasks Table (Real-time persistent task tracking)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS student_tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            task_name TEXT NOT NULL,
+            status TEXT NOT NULL,
+            confidence TEXT NOT NULL
+        )
+    """)
+    # Insert default users if empty
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", ("taibakabir240@gmail.com", "123", "Taiba Kabir", "Student"))
         cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", ("mentor@ezitech.org", "123", "Sir Mentor", "Mentor"))
+        # Default tasks for student
+        cursor.execute("INSERT INTO student_tasks (email, task_name, status, confidence) VALUES (?, ?, ?, ?)", 
+                       ("taibakabir240@gmail.com", "AI-013 Neo4j Knowledge Graph", "Completed", "95%"))
+        cursor.execute("INSERT INTO student_tasks (email, task_name, status, confidence) VALUES (?, ?, ?, ?)", 
+                       ("taibakabir240@gmail.com", "AI-003 Mentor Assistant", "In Progress", "80%"))
         conn.commit()
     conn.close()
 
@@ -49,10 +66,6 @@ if "theme" not in st.session_state:
 if "student_messages" not in st.session_state:
     st.session_state.student_messages = [
         {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you with your case studies, Neo4j, or debugging concepts today?"}
-    ]
-if "mentor_messages" not in st.session_state:
-    st.session_state.mentor_messages = [
-        {"role": "assistant", "content": "Hello Mentor! I am your Internship Intelligence Assistant. How can I help you analyze intern performance today?"}
     ]
 
 # Dynamic Theme Custom CSS Styling
@@ -187,7 +200,6 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🧭 Portal Navigation")
     
-    # Strictly separated menus based on role
     if is_student:
         nav_options = [
             "AI Chat Assistant", 
@@ -267,13 +279,57 @@ if is_student:
             st.session_state.student_messages.append({"role": "assistant", "content": ai_reply})
 
     elif st.session_state.nav_option == "Task & Progress Tracker":
-        st.header("📋 Task & Progress Tracker")
-        df = pd.DataFrame({
-            "Case Study": ["AI-013 Neo4j Knowledge Graph", "AI-003 Mentor Assistant", "YOLOv8 License Plate Detection", "Parallel Computing OpenMP"],
-            "Milestone Status": ["Completed", "In Progress", "Pending", "Pending"],
-            "Confidence Score": ["95%", "80%", "N/A", "N/A"]
-        })
-        st.dataframe(df, use_container_width=True)
+        st.header("📋 Real Database Task & Progress Tracker")
+        st.markdown("Add and manage your case studies and milestones. Data is permanently saved in SQLite.")
+        
+        # Form to add new task to real database
+        with st.form("add_task_form"):
+            st.subheader("➕ Add New Task / Milestone")
+            new_task_name = st.text_input("Case Study / Task Title (e.g., YOLOv8 License Plate Detection)")
+            new_task_status = st.selectbox("Status", ["Pending", "In Progress", "Completed"])
+            new_task_conf = st.text_input("Confidence / Score (e.g., 90%)", value="85%")
+            submit_task = st.form_submit_button("Save Task to Database")
+            
+            if submit_task:
+                if new_task_name:
+                    conn = sqlite3.connect("users.db")
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO student_tasks (email, task_name, status, confidence) VALUES (?, ?, ?, ?)",
+                                   (st.session_state.user_email, new_task_name, new_task_status, new_task_conf))
+                    conn.commit()
+                    conn.close()
+                    st.success("Task added successfully and saved to database!")
+                    st.rerun()
+                else:
+                    st.warning("Please enter a task name.")
+
+        st.markdown("---")
+        st.subheader("📌 Your Current Tasks")
+        
+        # Fetch tasks from database for current logged-in user
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, task_name, status, confidence FROM student_tasks WHERE email = ?", (st.session_state.user_email,))
+        tasks_data = cursor.fetchall()
+        conn.close()
+        
+        if tasks_data:
+            df_tasks = pd.DataFrame(tasks_data, columns=["ID", "Case Study / Task", "Milestone Status", "Confidence Score"])
+            st.dataframe(df_tasks, use_container_width=True)
+            
+            # Option to delete a task
+            task_ids = [t[0] for t in tasks_data]
+            selected_task_id = st.selectbox("Select Task ID to Delete (if completed/removed)", options=[None] + task_ids)
+            if selected_task_id and st.button("Delete Selected Task"):
+                conn = sqlite3.connect("users.db")
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM student_tasks WHERE id = ?", (selected_task_id,))
+                conn.commit()
+                conn.close()
+                st.success("Task deleted successfully!")
+                st.rerun()
+        else:
+            st.info("No tasks found. Add a new task above!")
 
     elif st.session_state.nav_option == "Skill Gap & Roadmap":
         st.header("🗺️ Personalized Skill Gap & Roadmap")
