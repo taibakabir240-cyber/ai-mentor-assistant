@@ -233,7 +233,7 @@ is_eng = (st.session_state.language == "English")
 if is_student:
     if st.session_state.nav_option == "AI Chat Assistant":
         st.header("💬 Student AI Mentor Assistant & Voice Chat")
-        st.markdown("Aap yahan text likh kar bhi baat kar sakte hain, aur chat box ke sath diye gaye **Voice Record** button se bol kar bhi message bhej sakte hain!")
+        st.markdown("Aap yahan text likh kar bhi baat kar sakte hain, ya phir **Voice Record** button se apni awaz record karke accurate response hasil kar sakte hain!")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -260,7 +260,7 @@ if is_student:
                     except Exception:
                         pass
 
-        # Chat Input Layout with Voice Recording Option side-by-side
+        # Chat Input Layout with Real Whisper Voice Recording Support
         chat_container = st.container()
         
         with chat_container:
@@ -273,14 +273,40 @@ if is_student:
                 st.markdown("<p style='font-size: 11px; margin-bottom: 2px;'>Voice Note</p>", unsafe_allow_html=True)
                 audio_info = mic_recorder(start_prompt="🎙️ Record", stop_prompt="⏹️ Stop", key='chat_mic')
 
-        # Determine user input source (Text or Voice)
+        # Determine user input source (Text or Real Transcribed Voice via Whisper)
         prompt = None
         if text_prompt:
             prompt = text_prompt
-        elif audio_info:
-            # Voice recorded data converted/simulated as query
-            prompt = "Can you explain how to fix the directory error in Case Study AI-002?"
-            st.audio(audio_info['bytes'])
+        elif audio_info and 'bytes' in audio_info:
+            audio_bytes = audio_info['bytes']
+            if client and len(audio_bytes) > 0:
+                with st.spinner("Transcribing your voice..."):
+                    try:
+                        # Save temporary audio file for transcription
+                        audio_file_path = "temp_audio.wav"
+                        with open(audio_file_path, "wb") as f:
+                            f.write(audio_bytes)
+                        
+                        with open(audio_file_path, "rb") as file:
+                            transcription = client.audio.transcriptions.create(
+                                file=(audio_file_path, file.read()),
+                                model="whisper-large-v3",
+                                prompt="Specify context or leave blank",
+                                response_format="text",
+                                temperature=0.0
+                            )
+                        prompt = transcription.strip()
+                        
+                        # Cleanup temp file
+                        if os.path.exists(audio_file_path):
+                            os.remove(audio_file_path)
+                            
+                        if prompt:
+                            st.info(f"🎙️ Transcribed Voice: '{prompt}'")
+                        else:
+                            st.warning("Could not detect clear speech. Please try recording again.")
+                    except Exception as e:
+                        st.error(f"Speech-to-Text Error: {e}")
 
         if prompt:
             st.session_state.student_messages.append({"role": "user", "content": prompt})
