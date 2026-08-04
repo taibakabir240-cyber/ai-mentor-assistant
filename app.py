@@ -10,14 +10,38 @@ from streamlit_mic_recorder import mic_recorder
 from PIL import Image
 import base64
 
-# 1. Page Configuration
+# 1. Initialize Session States FIRST (Before set_page_config or anything else)
+if "theme" not in st.session_state:
+    st.session_state.theme = "Light"
+if "language" not in st.session_state:
+    st.session_state.language = "English"
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "user_role" not in st.session_state:
+    st.session_state.user_role = "Student"
+if "user_name" not in st.session_state:
+    st.session_state.user_name = "Taiba Kabir"
+if "user_email" not in st.session_state:
+    st.session_state.user_email = "taibakabir240@gmail.com"
+if "user_linkedin" not in st.session_state:
+    st.session_state.user_linkedin = "https://linkedin.com/in/taibakabir"
+if "profile_image" not in st.session_state:
+    st.session_state.profile_image = None
+if "student_messages" not in st.session_state:
+    st.session_state.student_messages = [
+        {"role": "assistant", "content": "Hello dear! Welcome to your Ezitech AI Mentor Workspace . How can I assist you with your technical case studies, development frameworks, or debugging tasks today?"}
+    ]
+if "last_audio_signature" not in st.session_state:
+    st.session_state.last_audio_signature = None
+
+# 2. Page Configuration
 st.set_page_config(
     page_title="Ezitech AI Portal",
     layout="wide",
     page_icon="🎓"
 )
 
-# 2. Database Initialization
+# 3. Database Initialization
 def init_db():
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
@@ -59,35 +83,13 @@ def init_db():
 
 init_db()
 
-# 3. Initialize Session States
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "user_role" not in st.session_state:
-    st.session_state.user_role = "Student"
-if "user_name" not in st.session_state:
-    st.session_state.user_name = "Taiba Kabir"
-if "user_email" not in st.session_state:
-    st.session_state.user_email = "taibakabir240@gmail.com"
-if "user_linkedin" not in st.session_state:
-    st.session_state.user_linkedin = "https://linkedin.com/in/taibakabir"
-if "profile_image" not in st.session_state:
-    st.session_state.profile_image = None
-if "language" not in st.session_state:
-    st.session_state.language = "English"
-if "theme" not in st.session_state:
-    st.session_state.theme = "Light"
-if "student_messages" not in st.session_state:
-    st.session_state.student_messages = [
-        {"role": "assistant", "content": "Hello dear! Welcome to your Ezitech AI Mentor Workspace . How can I assist you with your technical case studies, development frameworks, or debugging tasks today?"}
-    ]
-if "last_audio_signature" not in st.session_state:
-    st.session_state.last_audio_signature = None
-
-# Theme & Centered Profile CSS with Smooth Image Rendering
+# 4. Dynamic Theme & UI Styling (Fixing Theme Switch Issue)
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
-            .main { background-color: #0e1117; color: #ffffff; }
+            .stApp { background-color: #0e1117 !important; color: #ffffff !important; }
+            .main { background-color: #0e1117 !important; color: #ffffff !important; }
+            [data-testid="stSidebar"] { background-color: #161b22 !important; color: #ffffff !important; }
             .stButton>button[kind="primary"] { 
                 background-color: #1e3c72 !important; 
                 color: white !important; 
@@ -127,7 +129,9 @@ if st.session_state.theme == "Dark":
 else:
     st.markdown("""
         <style>
-            .main { background-color: #f8f9fa; color: #000000; }
+            .stApp { background-color: #ffffff !important; color: #000000 !important; }
+            .main { background-color: #f8f9fa !important; color: #000000 !important; }
+            [data-testid="stSidebar"] { background-color: #f0f2f5 !important; color: #000000 !important; }
             .stButton>button[kind="primary"] { 
                 background-color: #1e3c72 !important; 
                 color: white !important; 
@@ -165,7 +169,7 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-# 4. Safely Fetch Groq API Key
+# 5. Safely Fetch Groq API Key
 api_key = None
 try:
     if "GROQ_API_KEY" in st.secrets:
@@ -183,7 +187,7 @@ if api_key:
     except Exception as e:
         st.error(f"Failed to initialize Groq client: {e}")
 
-# 5. Professional Login / Sign-Up Interface with Real Ezitech Logo
+# 6. Professional Login / Sign-Up Interface with Real Ezitech Logo
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -268,7 +272,7 @@ if not st.session_state.logged_in:
                     
     st.stop()
 
-# 6. Sidebar Profile & Settings Section
+# 7. Sidebar Profile & Settings Section
 with st.sidebar:
     st.markdown("💻 **Developed by Taiba Kabir**")
     st.markdown("---")
@@ -323,7 +327,7 @@ with st.sidebar:
         if st.button("Apply Settings"):
             st.session_state.theme = selected_theme
             st.session_state.language = selected_lang
-            st.success("Theme and settings applied successfully!")
+            st.success("Theme applied successfully!")
             st.rerun()
 
     with st.expander("🔒 Password & Privacy"):
@@ -354,7 +358,7 @@ with st.sidebar:
         st.session_state.logged_in = False
         st.rerun()
 
-# 7. Main Professional Navigation & Dashboards Logic
+# 8. Main Professional Navigation & Dashboards Logic
 is_eng = (st.session_state.language == "English")
 
 if is_student:
@@ -406,7 +410,7 @@ if is_student:
                     try:
                         formatted_msgs = [{
                             "role": "system", 
-                            "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework. Give concise, direct answers and helpful guidance."
+                            "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework . Give concise, direct answers and helpful guidance."
                         }]
                         for m in st.session_state.student_messages:
                             formatted_msgs.append({"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]})
