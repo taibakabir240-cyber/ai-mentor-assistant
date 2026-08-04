@@ -82,13 +82,26 @@ if "student_messages" not in st.session_state:
 if "last_audio_signature" not in st.session_state:
     st.session_state.last_audio_signature = None
 
-# WhatsApp Style Fixed Bottom Bar CSS
+# Circular Profile Image & WhatsApp Style Fixed Bottom Bar CSS
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
             .main { background-color: #0e1117; color: #ffffff; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
             section.main > div:last-child { padding-bottom: 120px; }
+            
+            /* Circular Profile Picture Style */
+            [data-testid="stSidebar"] img {
+                border-radius: 50% !important;
+                object-fit: cover !important;
+                width: 90px !important;
+                height: 90px !important;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                border: 3px solid #2a5298;
+            }
+
             .whatsapp-fixed-bar {
                 position: fixed !important;
                 bottom: 0 !important;
@@ -108,6 +121,19 @@ else:
             .main { background-color: #f8f9fa; color: #000000; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
             section.main > div:last-child { padding-bottom: 120px; }
+            
+            /* Circular Profile Picture Style */
+            [data-testid="stSidebar"] img {
+                border-radius: 50% !important;
+                object-fit: cover !important;
+                width: 90px !important;
+                height: 90px !important;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                border: 3px solid #1e3c72;
+            }
+
             .whatsapp-fixed-bar {
                 position: fixed !important;
                 bottom: 0 !important;
@@ -218,15 +244,15 @@ with st.sidebar:
     is_student = (st.session_state.user_role == "Student")
     role_color = "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" if is_student else "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
     
-    # Display Profile Picture or Default Avatar Icon
+    # Display Circular Profile Picture or Default Avatar Icon
     if st.session_state.profile_image:
-        st.image(st.session_state.profile_image, width=100)
+        st.image(st.session_state.profile_image)
     else:
         avatar_icon = "🧕" if is_student else "👨‍🏫"
         st.markdown(f"<div style='font-size: 50px; text-align: center;'>{avatar_icon}</div>", unsafe_allow_html=True)
     
     st.markdown(f"""
-        <div style="background: {role_color}; padding: 15px; border-radius: 12px; color: white; text-align: center; margin-bottom: 15px;">
+        <div style="background: {role_color}; padding: 15px; border-radius: 12px; color: white; text-align: center; margin-top: 10px; margin-bottom: 15px;">
             <h3 style="margin: 0; font-size: 16px;">{st.session_state.user_name}</h3>
             <p style="margin: 3px 0 0 0; font-size: 11px; opacity: 0.9;">{st.session_state.user_email}</p>
             <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 8px; font-size: 10px; margin-top: 5px; display:inline-block;">{'Student' if is_student else 'Mentor'}</span>
