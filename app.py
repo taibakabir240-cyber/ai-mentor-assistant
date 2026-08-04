@@ -196,7 +196,7 @@ if not st.session_state.logged_in:
 
 # 6. Sidebar Profile & Navigation
 with st.sidebar:
-    st.markdown("💻 **Ezitech Ecosystem (EEF AI-003)**")
+    st.markdown("💻 **Developed by Taiba Kabir**")
     
     is_student = (st.session_state.user_role == "Student")
     role_color = "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" if is_student else "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
@@ -231,7 +231,8 @@ with st.sidebar:
             "Task & Progress Tracker", 
             "Skill Gap & Roadmap", 
             "Resource Hub & Case Studies", 
-            "Code Debugging Sandbox"
+            "Code Debugging Sandbox",
+            "Account Settings & Profile"
         ]
     else:
         nav_options = [
@@ -239,7 +240,8 @@ with st.sidebar:
             "Struggling Interns Analytics", 
             "Weekly Report Generator", 
             "Task Difficulty & Milestones", 
-            "Broadcast Announcements"
+            "Broadcast Announcements",
+            "Account Settings & Profile"
         ]
         
     nav_choice = st.radio("Select Section", nav_options, label_visibility="collapsed")
@@ -452,6 +454,34 @@ if is_student:
             except SyntaxError as e:
                 st.error(f"AI Syntax Error: {e}")
 
+    elif st.session_state.nav_option == "Account Settings & Profile":
+        st.header("⚙️ Account Settings & Profile Management")
+        st.markdown("Update your personal account profile details and security credentials.")
+        
+        with st.form("profile_settings_form"):
+            updated_name = st.text_input("Full Name", value=st.session_state.user_name)
+            updated_email = st.text_input("Email Address (Username)", value=st.session_state.user_email, disabled=True)
+            updated_password = st.text_input("New Password", type="password", placeholder="Enter new password if you want to change")
+            
+            save_changes = st.form_submit_button("Save Profile Settings", type="primary")
+            
+            if save_changes:
+                if updated_name:
+                    conn = sqlite3.connect("users.db")
+                    cursor = conn.cursor()
+                    if updated_password:
+                        cursor.execute("UPDATE users SET name = ?, password = ? WHERE email = ?", (updated_name, updated_password, st.session_state.user_email))
+                    else:
+                        cursor.execute("UPDATE users SET name = ? WHERE email = ?", (updated_name, st.session_state.user_email))
+                    conn.commit()
+                    conn.close()
+                    
+                    st.session_state.user_name = updated_name
+                    st.success("Profile settings updated successfully!")
+                    st.rerun()
+                else:
+                    st.warning("Name cannot be empty.")
+
 else:
     if st.session_state.nav_option == "Mentor Intelligence Dashboard":
         st.header("📊 Mentor Intelligence Dashboard")
@@ -495,3 +525,31 @@ else:
                 st.success("Announcement broadcasted successfully to all active dashboards!")
             else:
                 st.warning("Please enter a message to broadcast.")
+
+    elif st.session_state.nav_option == "Account Settings & Profile":
+        st.header("⚙️ Account Settings & Profile Management")
+        st.markdown("Update your personal account profile details and security credentials.")
+        
+        with st.form("mentor_profile_form"):
+            updated_name = st.text_input("Full Name", value=st.session_state.user_name)
+            updated_email = st.text_input("Email Address (Username)", value=st.session_state.user_email, disabled=True)
+            updated_password = st.text_input("New Password", type="password", placeholder="Enter new password if you want to change")
+            
+            save_changes = st.form_submit_button("Save Profile Settings", type="primary")
+            
+            if save_changes:
+                if updated_name:
+                    conn = sqlite3.connect("users.db")
+                    cursor = conn.cursor()
+                    if updated_password:
+                        cursor.execute("UPDATE users SET name = ?, password = ? WHERE email = ?", (updated_name, updated_password, st.session_state.user_email))
+                    else:
+                        cursor.execute("UPDATE users SET name = ? WHERE email = ?", (updated_name, st.session_state.user_email))
+                    conn.commit()
+                    conn.close()
+                    
+                    st.session_state.user_name = updated_name
+                    st.success("Profile settings updated successfully!")
+                    st.rerun()
+                else:
+                    st.warning("Name cannot be empty.")
