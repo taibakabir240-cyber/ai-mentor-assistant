@@ -494,4 +494,4 @@ else:
             if announcement:
                 st.success("Announcement broadcasted successfully to all active dashboards!")
             else:
-                st.warning("Please enter a message to broadcast.")s
+                st.warning("Please enter a message to broadcast.")
