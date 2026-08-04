@@ -4,3 +4,4 @@ pandas
 requests
 gTTS
 SpeechRecognition
+streamlit-mic-recorder
