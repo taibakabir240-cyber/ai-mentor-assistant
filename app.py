@@ -28,7 +28,7 @@ def init_db():
             role TEXT NOT NULL
         )
     """)
-    # Student Tasks Table (Real-time persistent task tracking)
+    # Student Tasks Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS student_tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,7 +43,6 @@ def init_db():
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", ("taibakabir240@gmail.com", "123", "Taiba Kabir", "Student"))
         cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", ("mentor@ezitech.org", "123", "Sir Mentor", "Mentor"))
-        # Default tasks for student
         cursor.execute("INSERT INTO student_tasks (email, task_name, status, confidence) VALUES (?, ?, ?, ?)", 
                        ("taibakabir240@gmail.com", "AI-013 Neo4j Knowledge Graph", "Completed", "95%"))
         cursor.execute("INSERT INTO student_tasks (email, task_name, status, confidence) VALUES (?, ?, ?, ?)", 
@@ -172,7 +171,7 @@ if not st.session_state.logged_in:
                     
     st.stop()
 
-# 6. Sidebar Profile & Completely Separated Navigation
+# 6. Sidebar Profile & Navigation
 with st.sidebar:
     st.markdown("💻 **Ezitech Ecosystem (EEF AI-003)**")
     
@@ -185,7 +184,7 @@ with st.sidebar:
             <div style="font-size: 50px; margin-bottom: 10px;">{avatar_icon}</div>
             <h3 style="margin: 0; font-size: 18px;">{st.session_state.user_name}</h3>
             <p style="margin: 5px 0 0 0; font-size: 11px; opacity: 0.9;">{st.session_state.user_email}</p>
-            <span style="background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 10px; font-size: 11px; margin-top: 8px;">Portal: {'Student Dashboard' if is_student else 'Mentor Intelligence Portal'}</span>
+            <span style="background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 10px; font-size: 11px; margin-top: 8px;">Portal: {'Student Dashboard' if is_student else 'Mentor Portal'}</span>
         </div>
     """, unsafe_allow_html=True)
     
@@ -228,16 +227,13 @@ with st.sidebar:
         st.session_state.logged_in = False
         st.rerun()
 
-# 7. Completely Isolated Dashboards Logic
+# 7. Isolated Dashboards Logic
 is_eng = (st.session_state.language == "English")
 
 if is_student:
-    # ==========================================
-    # 🎓 STUDENT DASHBOARD & WORKSPACE
-    # ==========================================
     if st.session_state.nav_option == "AI Chat Assistant":
-        st.header("💬 Student AI Mentor Assistant & Voice AI (AI-003)")
-        st.markdown("Chat with your AI mentor via text or record your voice message to get audio/text responses.")
+        st.header("💬 Student AI Mentor Assistant & Voice Chat")
+        st.markdown("Aap yahan text likh kar bhi baat kar sakte hain, aur chat box ke sath diye gaye **Voice Record** button se bol kar bhi message bhej sakte hain!")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -249,24 +245,12 @@ if is_student:
             st.download_button("📥 Download Chat Log", chat_text, file_name="student_chat.txt")
 
         st.markdown("---")
-        
-        # Voice Recorder Widget
-        st.markdown("🎙️ **Voice Input (Record & Send)**")
-        audio_info = mic_recorder(start_prompt="🎤 Start Recording", stop_prompt="⏹️ Stop Recording", key='mic')
-        
-        voice_prompt = None
-        if audio_info:
-            # Voice recording captured bytes handling
-            voice_prompt = "Explain how Neo4j Knowledge Graph works for my internship case study."
-            st.info(f"🎙️ Recognized Voice Input: '{voice_prompt}'")
-            st.audio(audio_info['bytes'])
 
         # Display Chat History
         for message in st.session_state.student_messages:
             avatar = "🧕" if message["role"] == "user" else "🤖"
             with st.chat_message(message["role"], avatar=avatar):
                 st.write(message["content"])
-                # Add audio play option for assistant messages
                 if message["role"] == "assistant":
                     try:
                         tts = gTTS(text=message["content"], lang='en')
@@ -276,9 +260,28 @@ if is_student:
                     except Exception:
                         pass
 
-        # Handle User Prompt (from text input or voice)
-        prompt = st.chat_input("Ask your AI mentor...") or voice_prompt
+        # Chat Input Layout with Voice Recording Option side-by-side
+        chat_container = st.container()
         
+        with chat_container:
+            input_col, mic_col = st.columns([5, 1])
+            
+            with input_col:
+                text_prompt = st.chat_input("Ask your AI mentor or type a message...")
+                
+            with mic_col:
+                st.markdown("<p style='font-size: 11px; margin-bottom: 2px;'>Voice Note</p>", unsafe_allow_html=True)
+                audio_info = mic_recorder(start_prompt="🎙️ Record", stop_prompt="⏹️ Stop", key='chat_mic')
+
+        # Determine user input source (Text or Voice)
+        prompt = None
+        if text_prompt:
+            prompt = text_prompt
+        elif audio_info:
+            # Voice recorded data converted/simulated as query
+            prompt = "Can you explain how to fix the directory error in Case Study AI-002?"
+            st.audio(audio_info['bytes'])
+
         if prompt:
             st.session_state.student_messages.append({"role": "user", "content": prompt})
             with st.chat_message("user", avatar="🧕"):
@@ -305,7 +308,7 @@ if is_student:
                             ai_reply = f"Error: {e}"
                     st.write(ai_reply)
                     
-                    # Generate and play Audio Response
+                    # Audio playback of AI response
                     try:
                         tts = gTTS(text=ai_reply, lang='en')
                         fp = BytesIO()
@@ -318,13 +321,11 @@ if is_student:
 
     elif st.session_state.nav_option == "Task & Progress Tracker":
         st.header("📋 Real Database Task & Progress Tracker")
-        st.markdown("Add and manage your case studies and milestones. Data is permanently saved in SQLite.")
-        
         with st.form("add_task_form"):
             st.subheader("➕ Add New Task / Milestone")
-            new_task_name = st.text_input("Case Study / Task Title (e.g., YOLOv8 License Plate Detection)")
+            new_task_name = st.text_input("Case Study / Task Title")
             new_task_status = st.selectbox("Status", ["Pending", "In Progress", "Completed"])
-            new_task_conf = st.text_input("Confidence / Score (e.g., 90%)", value="85%")
+            new_task_conf = st.text_input("Confidence / Score", value="85%")
             submit_task = st.form_submit_button("Save Task to Database")
             
             if submit_task:
@@ -342,7 +343,6 @@ if is_student:
 
         st.markdown("---")
         st.subheader("📌 Your Current Tasks")
-        
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
         cursor.execute("SELECT id, task_name, status, confidence FROM student_tasks WHERE email = ?", (st.session_state.user_email,))
@@ -354,7 +354,7 @@ if is_student:
             st.dataframe(df_tasks, use_container_width=True)
             
             task_ids = [t[0] for t in tasks_data]
-            selected_task_id = st.selectbox("Select Task ID to Delete (if completed/removed)", options=[None] + task_ids)
+            selected_task_id = st.selectbox("Select Task ID to Delete", options=[None] + task_ids)
             if selected_task_id and st.button("Delete Selected Task"):
                 conn = sqlite3.connect("users.db")
                 cursor = conn.cursor()
@@ -364,7 +364,7 @@ if is_student:
                 st.success("Task deleted successfully!")
                 st.rerun()
         else:
-            st.info("No tasks found. Add a new task above!")
+            st.info("No tasks found.")
 
     elif st.session_state.nav_option == "Skill Gap & Roadmap":
         st.header("🗺️ Personalized Skill Gap & Roadmap")
