@@ -83,7 +83,7 @@ if "student_messages" not in st.session_state:
 if "last_audio_signature" not in st.session_state:
     st.session_state.last_audio_signature = None
 
-# Theme & Centered Profile CSS with Blue Primary Buttons Override
+# Theme & Centered Profile CSS with Smooth Image Rendering
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
@@ -189,17 +189,13 @@ if not st.session_state.logged_in:
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Exact Logo SVG Layout Matching Your Provided Image
         st.markdown("""
             <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 0px;">
                 <div style="background-color: #1976d2; border-radius: 12px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; border: 2px solid #1565c0;">
                     <svg viewBox="0 0 500 500" width="38" height="38" xmlns="http://www.w3.org/2000/svg">
                         <g fill="#ffffff">
-                            <!-- E part -->
                             <path d="M150 120 L350 120 L350 160 L190 160 L190 200 L330 200 L330 240 L190 240 L190 290 L350 290 L350 330 L150 330 Z" />
-                            <!-- T / Stem part -->
                             <path d="M220 290 L270 290 L270 410 L310 410 L310 450 L180 450 L180 410 L220 410 Z" transform="translate(15, -40)" />
-                            <!-- Graduation Cap / Tassel Elements -->
                             <polygon points="350,290 390,310 350,330 310,310" />
                             <path d="M380 320 Q395 360 385 390 L370 380 Z" />
                         </g>
@@ -272,7 +268,7 @@ if not st.session_state.logged_in:
                     
     st.stop()
 
-# 6. Sidebar Profile & Settings Section
+# 6. Sidebar Profile & Settings Section (Fixed Image Upload Blinking)
 with st.sidebar:
     st.markdown("💻 **Developed by Taiba Kabir**")
     st.markdown("---")
@@ -280,7 +276,7 @@ with st.sidebar:
     is_student = (st.session_state.user_role == "Student")
     role_color = "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" if is_student else "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
     
-    # Display Perfectly Centered Profile Picture or Default Avatar Icon
+    # Display Profile Picture or Default Avatar Icon
     if st.session_state.profile_image:
         col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
         with col_img2:
@@ -300,12 +296,13 @@ with st.sidebar:
     st.markdown("### ⚙️ Sidebar Settings & Profile")
     
     with st.expander("👤 Edit Profile & Picture"):
-        uploaded_file = st.file_uploader("Upload Profile Picture", type=["png", "jpg", "jpeg"])
-        if uploaded_file:
+        uploaded_file = st.file_uploader("Upload Profile Picture", type=["png", "jpg", "jpeg"], key="profile_pic_uploader")
+        if uploaded_file is not None:
             img = Image.open(uploaded_file)
-            st.session_state.profile_image = img
-            st.success("Picture updated!")
-            st.rerun()
+            if st.session_state.profile_image != img:
+                st.session_state.profile_image = img
+                st.toast("Profile picture updated successfully!", icon="✅")
+                st.rerun()
             
         new_name_sidebar = st.text_input("Update Name", value=st.session_state.user_name, key="sb_name")
         new_li_sidebar = st.text_input("LinkedIn URL", value=st.session_state.user_linkedin, key="sb_li")
