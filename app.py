@@ -70,12 +70,13 @@ if "student_messages" not in st.session_state:
         {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you with your case studies, Neo4j, or debugging concepts today?"}
     ]
 
-# Dynamic Theme Custom CSS Styling
+# Dynamic Theme Custom CSS Styling (Including ChatGPT-style fixed bottom chat input styling)
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
             .main { background-color: #0e1117; color: #ffffff; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
+            div.stChatInput { position: fixed; bottom: 0px; background: #0e1117; padding-bottom: 20px; z-index: 100; }
         </style>
     """, unsafe_allow_html=True)
 else:
@@ -233,7 +234,7 @@ is_eng = (st.session_state.language == "English")
 if is_student:
     if st.session_state.nav_option == "AI Chat Assistant":
         st.header("💬 Student AI Mentor Assistant & Voice Chat")
-        st.markdown("You can type your message or use the **Voice Record** button next to the input box to speak and get instant AI responses!")
+        st.markdown("You can type your message or use the **Voice Record** button at the bottom to speak and get instant AI responses!")
         
         col1, col2 = st.columns([1, 4])
         with col1:
@@ -246,7 +247,7 @@ if is_student:
 
         st.markdown("---")
 
-        # Display Chat History
+        # Display Chat History (Leaving space at bottom for floating input bar)
         for message in st.session_state.student_messages:
             avatar = "🧕" if message["role"] == "user" else "🤖"
             with st.chat_message(message["role"], avatar=avatar):
@@ -260,10 +261,11 @@ if is_student:
                     except Exception:
                         pass
 
-        # Chat Input Layout with Real Whisper Voice Recording Support
-        chat_container = st.container()
-        
-        with chat_container:
+        st.markdown("<br><br><br>", unsafe_allow_html=True)
+
+        # ChatGPT-Style Fixed Bottom Controls for Text & Voice Input
+        with st.container():
+            st.markdown("---")
             input_col, mic_col = st.columns([5, 1])
             
             with input_col:
@@ -290,7 +292,7 @@ if is_student:
                             transcription = client.audio.transcriptions.create(
                                 file=(audio_file_path, file.read()),
                                 model="whisper-large-v3",
-                                language="en",  # Set language explicitly to avoid hallucination/mixing
+                                language="en",
                                 response_format="text",
                                 temperature=0.0
                             )
