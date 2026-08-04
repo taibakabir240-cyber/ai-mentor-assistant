@@ -82,7 +82,7 @@ if "student_messages" not in st.session_state:
 if "last_audio_signature" not in st.session_state:
     st.session_state.last_audio_signature = None
 
-# Stable Sidebar, Blue-bordered Circular Profile & WhatsApp Style Fixed Bottom Bar CSS
+# Anti-blink & Centered Profile CSS
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
@@ -90,7 +90,6 @@ if st.session_state.theme == "Dark":
             .stButton>button { border-radius: 8px; font-weight: 600; }
             section.main > div:last-child { padding-bottom: 120px; }
             
-            /* Anti-blink and Stable Circular Profile Picture Style */
             [data-testid="stSidebar"] img {
                 border-radius: 50% !important;
                 object-fit: cover !important;
@@ -122,7 +121,6 @@ else:
             .stButton>button { border-radius: 8px; font-weight: 600; }
             section.main > div:last-child { padding-bottom: 120px; }
             
-            /* Anti-blink and Stable Circular Profile Picture Style */
             [data-testid="stSidebar"] img {
                 border-radius: 50% !important;
                 object-fit: cover !important;
