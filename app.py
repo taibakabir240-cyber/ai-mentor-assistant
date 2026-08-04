@@ -343,7 +343,7 @@ with st.sidebar:
 
 # 8. Main Professional Navigation & Dashboards Logic
 if is_student:
-    heading_title = "🚀 طالب علم کا ورک اسپیس ڈ্যাশবোর্ড" if is_urdu else "🚀 Student Workspace Dashboard"
+    heading_title = "🚀 طالب علم کا ورک اسپیس ڈ্যাশবورد" if is_urdu else "🚀 Student Workspace Dashboard"
     st.markdown(f"## {heading_title}")
     
     tab_labels = [
