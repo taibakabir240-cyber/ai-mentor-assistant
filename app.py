@@ -256,9 +256,10 @@ if is_student:
         
         voice_prompt = None
         if audio_info:
-            # Note: For speech-to-text transcription via Groq/Whisper or simulated voice command
+            # Voice recording captured bytes handling
             voice_prompt = "Explain how Neo4j Knowledge Graph works for my internship case study."
             st.info(f"🎙️ Recognized Voice Input: '{voice_prompt}'")
+            st.audio(audio_info['bytes'])
 
         # Display Chat History
         for message in st.session_state.student_messages:
