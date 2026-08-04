@@ -66,6 +66,8 @@ if "student_messages" not in st.session_state:
     st.session_state.student_messages = [
         {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you with your case studies, Neo4j, or debugging concepts today?"}
     ]
+if "last_audio_signature" not in st.session_state:
+    st.session_state.last_audio_signature = None
 
 # WhatsApp Style Fixed Bottom Bar CSS
 if st.session_state.theme == "Dark":
@@ -260,6 +262,7 @@ if is_student:
         with col1:
             if st.button("🗑️ Clear Chat"):
                 st.session_state.student_messages = [{"role": "assistant", "content": "Chat history cleared."}]
+                st.session_state.last_audio_signature = None
                 st.rerun()
         with col2:
             chat_text = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state.student_messages])
@@ -292,7 +295,7 @@ if is_student:
                     try:
                         formatted_msgs = [{
                             "role": "system", 
-                            "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework (AI-003). DO NOT repeat repetitive introductory greetings if already greeted. Give concise, direct answers and helpful guidance."
+                            "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework (AI-003). Give concise, direct answers and helpful guidance."
                         }]
                         for m in st.session_state.student_messages:
                             formatted_msgs.append({"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]})
@@ -326,10 +329,13 @@ if is_student:
             audio_info = mic_recorder(start_prompt="🎙️", stop_prompt="⏹️", key='whatsapp_round_mic', format="webm")
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Handle Audio Transcription if recorded
+        # Handle Audio Transcription safely without looping
         if audio_info and 'bytes' in audio_info:
             audio_bytes = audio_info['bytes']
-            if client and len(audio_bytes) > 0:
+            audio_sig = hash(audio_bytes) if audio_bytes else None
+            
+            if client and len(audio_bytes) > 0 and audio_sig != st.session_state.last_audio_signature:
+                st.session_state.last_audio_signature = audio_sig
                 with st.spinner("Transcribing your voice..."):
                     try:
                         audio_file_path = "temp_audio.wav"
@@ -354,7 +360,7 @@ if is_student:
                             try:
                                 formatted_msgs = [{
                                     "role": "system", 
-                                    "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework (AI-003). DO NOT repeat repetitive introductory greetings if already greeted. Give concise, direct answers and helpful guidance."
+                                    "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework (AI-003). Give concise, direct answers and helpful guidance."
                                 }]
                                 for m in st.session_state.student_messages:
                                     formatted_msgs.append({"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]})
@@ -488,4 +494,4 @@ else:
             if announcement:
                 st.success("Announcement broadcasted successfully to all active dashboards!")
             else:
-                st.warning("Please enter a message to broadcast.")
+                st.warning("Please enter a message to broadcast.")s
