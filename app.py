@@ -67,13 +67,12 @@ if "student_messages" not in st.session_state:
         {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you with your case studies, Neo4j, or debugging concepts today?"}
     ]
 
-# WhatsApp Style Fixed Bottom Bar CSS (Ensuring it sticks to bottom properly using Streamlit overrides)
+# WhatsApp Style Fixed Bottom Bar CSS
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
             .main { background-color: #0e1117; color: #ffffff; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
-            /* Force Streamlit footer/bottom spacing and lock whatsapp bar */
             section.main > div:last-child { padding-bottom: 120px; }
             .whatsapp-fixed-bar {
                 position: fixed !important;
@@ -84,7 +83,7 @@ if st.session_state.theme == "Dark":
                 padding: 12px 24px !important;
                 z-index: 999999 !important;
                 box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
-                border-top: 1px: solid #2a3942;
+                border-top: 1px solid #2a3942;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -93,7 +92,6 @@ else:
         <style>
             .main { background-color: #f8f9fa; color: #000000; }
             .stButton>button { border-radius: 8px; font-weight: 600; }
-            /* Force Streamlit footer/bottom spacing and lock whatsapp bar */
             section.main > div:last-child { padding-bottom: 120px; }
             .whatsapp-fixed-bar {
                 position: fixed !important;
@@ -283,17 +281,19 @@ if is_student:
                     except Exception:
                         pass
 
-        # Callback function for processing input immediately on Enter key press
+        # Callback function for processing text input instantly on Enter
         def submit_whatsapp_query():
             q = st.session_state.whatsapp_input_field.strip()
             if q:
                 st.session_state.student_messages.append({"role": "user", "content": q})
-                # Call AI response generation
                 if not client:
                     ai_reply = "Error: Groq API Key missing."
                 else:
                     try:
-                        formatted_msgs = [{"role": "system", "content": "You are a professional AI mentor for students under Ezitech Engineering Framework (AI-003). Guide with hints, never write full assignment code directly."}]
+                        formatted_msgs = [{
+                            "role": "system", 
+                            "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework (AI-003). DO NOT repeat repetitive introductory greetings if already greeted. Give concise, direct answers and helpful guidance."
+                        }]
                         for m in st.session_state.student_messages:
                             formatted_msgs.append({"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]})
 
@@ -307,9 +307,9 @@ if is_student:
                     except Exception as e:
                         ai_reply = f"Error: {e}"
                 st.session_state.student_messages.append({"role": "assistant", "content": ai_reply})
-                st.session_state.whatsapp_input_field = "" # Reset box
+                st.session_state.whatsapp_input_field = ""
 
-        # WhatsApp Fixed Bottom Input Container via Markdown wrapper
+        # WhatsApp Fixed Bottom Input Bar Container
         st.markdown('<div class="whatsapp-fixed-bar">', unsafe_allow_html=True)
         col_input, col_mic = st.columns([11, 1])
         
@@ -352,7 +352,10 @@ if is_student:
                         if prompt:
                             st.session_state.student_messages.append({"role": "user", "content": prompt})
                             try:
-                                formatted_msgs = [{"role": "system", "content": "You are a professional AI mentor for students under Ezitech Engineering Framework (AI-003). Guide with hints, never write full assignment code directly."}]
+                                formatted_msgs = [{
+                                    "role": "system", 
+                                    "content": "You are Taiba's professional AI Mentor for Ezitech Engineering Framework (AI-003). DO NOT repeat repetitive introductory greetings if already greeted. Give concise, direct answers and helpful guidance."
+                                }]
                                 for m in st.session_state.student_messages:
                                     formatted_msgs.append({"role": "user" if m["role"] == "user" else "assistant", "content": m["content"]})
 
