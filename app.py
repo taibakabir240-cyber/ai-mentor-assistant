@@ -180,7 +180,7 @@ if not st.session_state.logged_in:
             login_pass = st.text_input("Password", type="password", value="123", key="login_pass_input")
             st.markdown("<br>", unsafe_allow_html=True)
             
-            if st.button("Login to Workspace", width="stretch", type="primary"):
+            if st.button("Login to Workspace", use_container_width=True, type="primary"):
                 conn = sqlite3.connect("users.db")
                 cursor = conn.cursor()
                 cursor.execute("SELECT password, name, role, linkedin FROM users WHERE email = ?", (login_email,))
@@ -207,7 +207,7 @@ if not st.session_state.logged_in:
             new_role = st.selectbox("Select Role", ["Student", "Mentor"], key="signup_role_input")
             st.markdown("<br>", unsafe_allow_html=True)
             
-            if st.button("Create Account", width="stretch", type="primary"):
+            if st.button("Create Account", use_container_width=True, type="primary"):
                 if not new_email or not new_pass or not new_name:
                     st.warning("Please fill out all fields.")
                 else:
@@ -315,7 +315,7 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    if st.button("🚪 Logout / Sign Out", width="stretch", type="secondary"):
+    if st.button("🚪 Logout / Sign Out", use_container_width=True, type="secondary"):
         st.session_state.logged_in = False
         st.rerun()
 
@@ -483,7 +483,7 @@ if is_student:
         
         if tasks_data:
             df_tasks = pd.DataFrame(tasks_data, columns=["ID", "Case Study / Task", "Milestone Status", "Confidence Score"])
-            st.dataframe(df_tasks, width="stretch")
+            st.dataframe(df_tasks, use_container_width=True)
             
             task_ids = [t[0] for t in tasks_data]
             selected_task_id = st.selectbox("Select Task ID to Delete", options=[None] + task_ids)
@@ -545,7 +545,7 @@ else:
             "Active Case Study": ["AI-003 Mentor Assistant", "AI-002 Code Reviewer", "YOLOv8 LPR"],
             "Progress": ["85%", "100%", "45%"]
         })
-        st.dataframe(mentor_df, width="stretch")
+        st.dataframe(mentor_df, use_container_width=True)
 
     with mentor_tabs[1]:
         st.header("⚠️ Struggling Interns Analytics")
@@ -554,7 +554,7 @@ else:
             "Delayed Module": ["YOLOv8 LPR", "CUDA Memory"],
             "Days Inactive": [5, 4]
         })
-        st.dataframe(struggling_df, width="stretch")
+        st.dataframe(struggling_df, use_container_width=True)
 
     with mentor_tabs[2]:
         st.header("📑 Weekly Report Generator")
