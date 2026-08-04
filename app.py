@@ -11,20 +11,52 @@ st.set_page_config(
     page_icon="🎓"
 )
 
-# Custom Elegant CSS Styling
-st.markdown("""
-    <style>
-        .main {
-            background-color: #f8f9fa;
-        }
-        .stButton>button {
-            border-radius: 8px;
-            font-weight: 600;
-        }
-    </style>
-""", unsafe_allow_html=True)
+# 2. Initialize Session States (Including Language & Theme)
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "user_role" not in st.session_state:
+    st.session_state.user_role = "Student"
+if "user_name" not in st.session_state:
+    st.session_state.user_name = "Taiba Kabir"
+if "user_email" not in st.session_state:
+    st.session_state.user_email = "taibakabir240@gmail.com"
+if "language" not in st.session_state:
+    st.session_state.language = "English"
+if "theme" not in st.session_state:
+    st.session_state.theme = "Light"
+if "student_messages" not in st.session_state:
+    st.session_state.student_messages = [
+        {"role": "assistant", "content": "Hello Taiba! I am your Ezitech AI Mentor Assistant (AI-003). How can I guide you today?"}
+    ]
+if "mentor_messages" not in st.session_state:
+    st.session_state.mentor_messages = [
+        {"role": "assistant", "content": "Hello Mentor! I am your Internship Intelligence Assistant. How can I help you analyze intern performance today?"}
+    ]
+if "nav_option" not in st.session_state:
+    st.session_state.nav_option = "AI Chat Assistant"
+if "users_db" not in st.session_state:
+    st.session_state.users_db = {
+        "taibakabir240@gmail.com": {"password": "123", "name": "Taiba Kabir", "role": "Student"},
+        "mentor@ezitech.org": {"password": "123", "name": "Sir Mentor", "role": "Mentor"}
+    }
 
-# 2. Safely Fetch Groq API Key
+# Dynamic Theme Custom CSS Styling
+if st.session_state.theme == "Dark":
+    st.markdown("""
+        <style>
+            .main { background-color: #0e1117; color: #ffffff; }
+            .stButton>button { border-radius: 8px; font-weight: 600; }
+        </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+        <style>
+            .main { background-color: #f8f9fa; color: #000000; }
+            .stButton>button { border-radius: 8px; font-weight: 600; }
+        </style>
+    """, unsafe_allow_html=True)
+
+# 3. Safely Fetch Groq API Key
 api_key = None
 try:
     if "GROQ_API_KEY" in st.secrets:
@@ -43,34 +75,13 @@ if api_key:
     except Exception as e:
         st.error(f"Failed to initialize Groq client: {e}")
 
-# 3. Initialize Session States
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "user_role" not in st.session_state:
-    st.session_state.user_role = "Student"
-if "user_name" not in st.session_state:
-    st.session_state.user_name = "Taiba Kabir"
-if "user_email" not in st.session_state:
-    st.session_state.user_email = "taibakabir240@gmail.com"
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "Hello! I am your Ezitech AI Mentor & Student Assistant. How can I help you today?"}
-    ]
-if "nav_option" not in st.session_state:
-    st.session_state.nav_option = "AI Chat Assistant"
-if "users_db" not in st.session_state:
-    st.session_state.users_db = {
-        "taibakabir240@gmail.com": {"password": "123", "name": "Taiba Kabir", "role": "Student"},
-        "mentor@ezitech.org": {"password": "123", "name": "Sir Mentor", "role": "Mentor"}
-    }
-
 # 4. Professional Login / Sign-Up Interface
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #1e3c72;'>🎓 Ezitech Portal</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #666;'>Sign in or create an account to access your workspace.</p>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #1e3c72;'>🎓 Ezitech AI-003 Portal</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #666;'>AI Mentor Assistant & Internship Intelligence Platform</p>", unsafe_allow_html=True)
         
         auth_tab1, auth_tab2 = st.tabs(["🔐 Login", "📝 Sign Up"])
         
@@ -119,9 +130,9 @@ if not st.session_state.logged_in:
                     
     st.stop()
 
-# 5. Sidebar Profile & Navigation (For Logged-In Users)
+# 5. Sidebar Profile, Language, Theme & Navigation
 with st.sidebar:
-    st.markdown("💻 **Ezitech Ecosystem**")
+    st.markdown("💻 **Ezitech Ecosystem (EEF AI-003)**")
     
     role_color = "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" if st.session_state.user_role == "Student" else "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
     avatar_icon = "🧕" if st.session_state.user_role == "Student" else "👨‍🏫"
@@ -135,58 +146,88 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("### 🧭 Navigation")
+    # Theme & Language Selector Controls
+    st.markdown("### ⚙️ App Customization")
+    selected_theme = st.selectbox("🎨 Theme Mode", ["Light", "Dark"], index=0 if st.session_state.theme == "Light" else 1)
+    if selected_theme != st.session_state.theme:
+        st.session_state.theme = selected_theme
+        st.rerun()
+
+    selected_lang = st.selectbox("🌐 Language / زبان", ["English", "Urdu"], index=0 if st.session_state.language == "English" else 1)
+    if selected_lang != st.session_state.language:
+        st.session_state.language = selected_lang
+        st.rerun()
+    
+    st.markdown("---")
+    st.markdown("### 🧭 Navigation Menu")
+    
     if st.session_state.user_role == "Student":
-        nav_options = ["AI Chat Assistant", "Task & Progress Tracker", "Resource Hub", "Code Playground", "Saved Bookmarks"]
+        nav_options = [
+            "AI Chat Assistant" if st.session_state.language == "English" else "AI چیٹ اسسٹنٹ", 
+            "Task & Progress Tracker" if st.session_state.language == "English" else "اسائنمنٹ اور پروگریس ٹریکر", 
+            "Skill Gap & Roadmap" if st.session_state.language == "English" else "اسکل گیپ اور روڈ میپ", 
+            "Resource Hub & Case Studies" if st.session_state.language == "English" else "ریسورس ہب اور کیس اسٹڈیز", 
+            "Code Debugging Sandbox" if st.session_state.language == "English" else "کوڈ ڈیبگنگ سینڈ باکس"
+        ]
     else:
-        nav_options = ["Mentor Dashboard & Analytics", "Manage Tasks", "Student Activity Logs", "Broadcast Announcements"]
+        nav_options = [
+            "Mentor Intelligence Dashboard" if st.session_state.language == "English" else "مینٹور انٹیلی جنس ڈیش بورڈ", 
+            "Struggling Interns Analytics" if st.session_state.language == "English" else "کمزور انٹرنز کی تجزیاتی رپورٹس", 
+            "Weekly Report Generator" if st.session_state.language == "English" else "ہفتہ وار رپورٹ جنریٹر", 
+            "Task Difficulty & Milestones" if st.session_state.language == "English" else "ٹاسک کی مشکل اور سنگ میل", 
+            "Broadcast Announcements" if st.session_state.language == "English" else "برکاسٹ اعلانات"
+        ]
         
     nav_choice = st.radio("Go to", nav_options, label_visibility="collapsed")
     st.session_state.nav_option = nav_choice
     
     st.markdown("---")
-    if st.button("🚪 Logout / Sign Out", use_container_width=True, type="secondary"):
+    logout_label = "🚪 Logout / Sign Out" if st.session_state.language == "English" else "🚪 لاگ آؤٹ / سائن آؤٹ"
+    if st.button(logout_label, use_container_width=True, type="secondary"):
         st.session_state.logged_in = False
-        st.session_state.messages = [{"role": "assistant", "content": "Hello! I am your AI Assistant. How can I help you today?"}]
         st.rerun()
 
-# 6. Main Application Pages
+# 6. Main Application Logic
 if st.session_state.user_role == "Student":
-    if st.session_state.nav_option == "AI Chat Assistant":
-        st.header("💬 AI Chat Assistant")
-        st.markdown("Ask questions about your internship guidelines, case studies, or debugging concepts.")
+    # ------------------ STUDENT DASHBOARD ------------------
+    is_eng = (st.session_state.language == "English")
+    
+    if st.session_state.nav_option in ["AI Chat Assistant", "AI چیٹ اسسٹنٹ"]:
+        st.header("💬 " + ("Student AI Mentor Assistant" if is_eng else "اسٹوڈنٹس AI مینٹور اسسٹنٹ"))
+        st.markdown("Get answers regarding internship guidelines, case studies, or debugging concepts." if is_eng else "انٹرنشپ کی رہنما خطوط، کیس اسٹڈیز، یا ڈیبگنگ کے بارے میں سوالات پوچھیں۔")
         
         col1, col2 = st.columns([1, 4])
         with col1:
-            if st.button("🗑️ Clear Chat"):
-                st.session_state.messages = [{"role": "assistant", "content": "Chat history cleared. How can I help you?"}]
+            if st.button("🗑️ " + ("Clear Chat" if is_eng else "چیٹ صاف کریں")):
+                st.session_state.student_messages = [{"role": "assistant", "content": "Chat history cleared."}]
                 st.rerun()
         with col2:
-            chat_history_text = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state.messages])
-            st.download_button("📥 Download Chat History", chat_history_text, file_name="chat_history.txt")
+            chat_history_text = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state.student_messages])
+            st.download_button("📥 " + ("Download Chat History" if is_eng else "چیٹ ہسٹری ڈاؤن لوڈ کریں"), chat_history_text, file_name="student_chat.txt")
 
         st.markdown("---")
 
-        for message in st.session_state.messages:
+        for message in st.session_state.student_messages:
             avatar = "🧕" if message["role"] == "user" else "🤖"
             with st.chat_message(message["role"], avatar=avatar):
                 st.write(message["content"])
 
-        if prompt := st.chat_input("Type your message here..."):
-            st.session_state.messages.append({"role": "user", "content": prompt})
+        prompt_placeholder = "Ask your AI mentor..." if is_eng else "اپنے AI مینٹور سے پوچھیں..."
+        if prompt := st.chat_input(prompt_placeholder):
+            st.session_state.student_messages.append({"role": "user", "content": prompt})
             with st.chat_message("user", avatar="🧕"):
                 st.write(prompt)
 
             with st.chat_message("assistant", avatar="🤖"):
-                with st.spinner("Thinking..."):
+                with st.spinner("Thinking..." if is_eng else "سوچ رہا ہے..."):
                     if not client:
-                        ai_reply = "Error: Groq API Key is missing or invalid. Please check your Streamlit Secrets."
+                        ai_reply = "Error: Groq API Key is missing."
                     else:
                         try:
                             formatted_messages = [
-                                {"role": "system", "content": "You are a helpful, professional AI mentor and student assistant within the Ezitech ecosystem."}
+                                {"role": "system", "content": f"You are a professional AI mentor for students under Ezitech Engineering Framework (AI-003). Respond in {st.session_state.language} language. Guide with hints, never write full assignment code directly."}
                             ]
-                            for m in st.session_state.messages:
+                            for m in st.session_state.student_messages:
                                 role = "user" if m["role"] == "user" else "assistant"
                                 formatted_messages.append({"role": role, "content": m["content"]})
 
@@ -198,72 +239,83 @@ if st.session_state.user_role == "Student":
                             )
                             ai_reply = completion.choices[0].message.content
                         except Exception as e:
-                            ai_reply = f"An error occurred: {e}"
+                            ai_reply = f"Error: {e}"
                     
                     st.write(ai_reply)
             
-            st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+            st.session_state.student_messages.append({"role": "assistant", "content": ai_reply})
 
-    elif st.session_state.nav_option == "Task & Progress Tracker":
-        st.header("📋 Task & Progress Tracker")
+    elif st.session_state.nav_option in ["Task & Progress Tracker", "اسائنمنٹ اور پروگریس ٹریکر"]:
+        st.header("📋 " + ("Task & Progress Tracker" if is_eng else "ٹاسک اور پروگریس ٹریکر"))
         df = pd.DataFrame({
-            "Task": ["Setup Environment", "Parallel Computing Case Study", "YOLOv8 License Plate Detection", "AI Mentor UI Integration"],
-            "Status": ["Completed", "Completed", "In Progress", "Pending"],
-            "Priority": ["High", "High", "Medium", "High"]
+            "Case Study": ["AI-002 Code Reviewer", "AI-003 Mentor Assistant", "YOLOv8 LPR", "Parallel Computing"],
+            "Milestone Status": ["Completed", "In Progress", "Pending", "Pending"],
+            "Confidence Score": ["95%", "80%", "N/A", "N/A"]
         })
         st.dataframe(df, use_container_width=True)
 
-    elif st.session_state.nav_option == "Resource Hub":
-        st.header("📚 Resource Hub")
-        st.info("Access your study materials and research documentation here.")
+    elif st.session_state.nav_option in ["Skill Gap & Roadmap", "اسکل گیپ اور روڈ میپ"]:
+        st.header("🗺️ " + ("Personalized Skill Gap & Roadmap" if is_eng else "ذاتی اسکل گیپ اور روڈ میپ"))
+        st.info("AI generated insights based on performance." if is_eng else "کارکردگی کی بنیاد پر AI کی تیار کردہ رپورٹ۔")
         st.markdown("""
-        * [Ezitech Framework Documentation](https://ezitech.org)
-        * [Parallel Distributed Computing Notes](https://github.com)
+        * **Current Level:** Intermediate AI Engineer
+        * **Identified Skill Gap:** Advanced RAG Pipeline Optimization
+        * **Recommended Next Module:** Fine-tuning open-source LLMs
         """)
 
-    elif st.session_state.nav_option == "Code Playground":
-        st.header("⚡ Code Playground")
-        st.text_area("Python Code Snippet", "print('Hello from Ezitech AI Mentor!')")
-        if st.button("Run Code"):
-            st.code("Hello from Ezitech AI Mentor!\nExecution successful.", language="text")
+    elif st.session_state.nav_option in ["Resource Hub & Case Studies", "ریسورس ہب اور کیس اسٹڈیز"]:
+        st.header("📚 " + ("Resource Hub & Case Studies" if is_eng else "ریسورس ہب اور کیس اسٹڈیز"))
+        st.markdown("""
+        * [Ezitech EEF Documentation](https://ezitech.org)
+        * [Case Study AI-003 Repository](https://github.com)
+        """)
 
-    elif st.session_state.nav_option == "Saved Bookmarks":
-        st.header("🔖 Saved Bookmarks")
-        st.write("No bookmarks saved yet.")
+    elif st.session_state.nav_option in ["Code Debugging Sandbox", "کوڈ ڈیبگنگ سینڈ باکس"]:
+        st.header("⚡ " + ("Code Debugging Sandbox" if is_eng else "کوڈ ڈیبگنگ سینڈ باکس"))
+        st.text_area("Snippet Code" if is_eng else "کوڈ یہاں درج کریں", "print('Debugging session active')")
+        if st.button("Analyze Code" if is_eng else "کوڈ کا تجزیہ کریں"):
+            st.success("AI Analysis: Code syntax is clean." if is_eng else "کوڈ بالکل درست ہے۔")
 
 else:
-    if st.session_state.nav_option == "Mentor Dashboard & Analytics":
-        st.header("📊 Mentor Analytics & Performance Overview")
+    # ------------------ MENTOR DASHBOARD ------------------
+    is_eng = (st.session_state.language == "English")
+    
+    if st.session_state.nav_option in ["Mentor Intelligence Dashboard", "مینٹور انٹیلی جنس ڈیش بورڈ"]:
+        st.header("📊 " + ("Mentor Intelligence Dashboard" if is_eng else "مینٹور انٹیلی جنس ڈیش بورڈ"))
         col1, col2, col3 = st.columns(3)
-        col1.metric("Active Interns", "24", "+3 this week")
-        col2.metric("Completed Case Studies", "142", "+12 today")
-        col3.metric("Average Score", "88.5%", "+2.1%")
+        col1.metric("Active Interns", "32")
+        col2.metric("Completed Case Studies", "184")
+        col3.metric("AI Accuracy", "94.2%")
         
-        intern_df = pd.DataFrame({
+        mentor_df = pd.DataFrame({
             "Intern Name": ["Taiba Kabir", "Ali Khan", "Ayesha Ahmed"],
-            "Assigned Project": ["AI Code Reviewer", "Parallel Computing", "YOLOv8 LPR"],
-            "Progress": ["100%", "85%", "60%"],
-            "Status": ["Active", "Active", "Pending Review"]
+            "Active Case Study": ["AI-003 Mentor Assistant", "AI-002 Code Reviewer", "YOLOv8 LPR"],
+            "Progress": ["85%", "100%", "45%"]
         })
-        st.dataframe(intern_df, use_container_width=True)
+        st.dataframe(mentor_df, use_container_width=True)
 
-    elif st.session_state.nav_option == "Manage Tasks":
-        st.header("🛠️ Assign & Manage Tasks")
-        st.text_input("New Task Title")
-        if st.button("Publish Task"):
-            st.success("Task published successfully!")
-
-    elif st.session_state.nav_option == "Student Activity Logs":
-        st.header("⏱️ Live Student Activity Logs")
-        log_df = pd.DataFrame({
-            "User": ["Taiba Kabir", "Ali Khan"],
-            "Action": ["Ran Code Playground", "Completed Task 2"],
-            "Timestamp": [datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "2026-08-04 10:15:00"]
+    elif st.session_state.nav_option in ["Struggling Interns Analytics", "کمزور انٹرنز کی تجزیاتی رپورٹس"]:
+        st.header("⚠️ " + ("Struggling Interns Analytics" if is_eng else "کمزور انٹرنز کی تجزیاتی رپورٹس"))
+        struggling_df = pd.DataFrame({
+            "Intern Name": ["Ayesha Ahmed", "Zainab Malik"],
+            "Delayed Module": ["YOLOv8 LPR", "CUDA Memory"],
+            "Days Inactive": [5, 4]
         })
-        st.dataframe(log_df, use_container_width=True)
+        st.dataframe(struggling_df, use_container_width=True)
 
-    elif st.session_state.nav_option == "Broadcast Announcements":
-        st.header("📢 Broadcast Announcements")
-        announcement_text = st.text_area("Write announcement message...")
-        if st.button("Broadcast Now"):
+    elif st.session_state.nav_option in ["Weekly Report Generator", "ہفتہ وار رپورٹ جنریٹر"]:
+        st.header("📑 " + ("Weekly Report Generator" if is_eng else "ہفتہ وار رپورٹ جنریٹر"))
+        if st.button("Generate Weekly Report" if is_eng else "ہفتہ وار رپورٹ بنائیں"):
+            st.success("Weekly progress report compiled successfully!")
+
+    elif st.session_state.nav_option in ["Task Difficulty & Milestones", "ٹاسک کی مشکل اور سنگ میل"]:
+        st.header("⚙️ " + ("Task Difficulty Management" if is_eng else "ٹاسک کی مشکل کا انتظام"))
+        st.selectbox("Select Intern", ["Taiba Kabir", "Ali Khan"])
+        if st.button("Update Roadmap" if is_eng else "روڈ میپ اپ ڈیٹ کریں"):
+            st.success("Updated successfully!")
+
+    elif st.session_state.nav_option in ["Broadcast Announcements", "برکاست اعلانات"]:
+        st.header("📢 " + ("Broadcast Announcements" if is_eng else "برکاست اعلانات"))
+        st.text_area("Write broadcast message..." if is_eng else "اعلان کا پیغام لکھیں...")
+        if st.button("Broadcast Now" if is_eng else "ابھی نشر کریں"):
             st.success("Announcement broadcasted successfully!")
