@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -11,7 +12,29 @@ st.set_page_config(
     page_icon="🎓"
 )
 
-# 2. Initialize Session States
+# 2. Database Initialization (SQLite for Real Permanent Storage)
+def init_db():
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            email TEXT PRIMARY KEY,
+            password TEXT NOT NULL,
+            name TEXT NOT NULL,
+            role TEXT NOT NULL
+        )
+    """)
+    # Insert default users if table is empty
+    cursor.execute("SELECT COUNT(*) FROM users")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", ("taibakabir240@gmail.com", "123", "Taiba Kabir", "Student"))
+        cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", ("mentor@ezitech.org", "123", "Sir Mentor", "Mentor"))
+        conn.commit()
+    conn.close()
+
+init_db()
+
+# 3. Initialize Session States
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "user_role" not in st.session_state:
@@ -34,11 +57,6 @@ if "mentor_messages" not in st.session_state:
     ]
 if "nav_option" not in st.session_state:
     st.session_state.nav_option = "AI Chat Assistant"
-if "users_db" not in st.session_state:
-    st.session_state.users_db = {
-        "taibakabir240@gmail.com": {"password": "123", "name": "Taiba Kabir", "role": "Student"},
-        "mentor@ezitech.org": {"password": "123", "name": "Sir Mentor", "role": "Mentor"}
-    }
 
 # Dynamic Theme Custom CSS Styling
 if st.session_state.theme == "Dark":
@@ -56,7 +74,7 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-# 3. Safely Fetch Groq API Key
+# 4. Safely Fetch Groq API Key
 api_key = None
 try:
     if "GROQ_API_KEY" in st.secrets:
@@ -75,13 +93,13 @@ if api_key:
     except Exception as e:
         st.error(f"Failed to initialize Groq client: {e}")
 
-# 4. Professional Login / Sign-Up Interface
+# 5. Professional Login / Sign-Up Interface (Connected with SQLite)
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("<h1 style='text-align: center; color: #1e3c72;'>🎓 Ezitech AI-003 Portal</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #666;'>AI Mentor Assistant & Internship Intelligence Platform</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #666;'>AI Mentor Assistant & Internship Intelligence Platform (Real DB)</p>", unsafe_allow_html=True)
         
         auth_tab1, auth_tab2 = st.tabs(["🔐 Login", "📝 Sign Up"])
         
@@ -92,11 +110,17 @@ if not st.session_state.logged_in:
             st.markdown("<br>", unsafe_allow_html=True)
             
             if st.button("Login to Workspace", use_container_width=True, type="primary"):
-                if login_email in st.session_state.users_db and st.session_state.users_db[login_email]["password"] == login_pass:
+                conn = sqlite3.connect("users.db")
+                cursor = conn.cursor()
+                cursor.execute("SELECT password, name, role FROM users WHERE email = ?", (login_email,))
+                user_record = cursor.fetchone()
+                conn.close()
+                
+                if user_record and user_record[0] == login_pass:
                     st.session_state.logged_in = True
                     st.session_state.user_email = login_email
-                    st.session_state.user_name = st.session_state.users_db[login_email]["name"]
-                    st.session_state.user_role = st.session_state.users_db[login_email]["role"]
+                    st.session_state.user_name = user_record[1]
+                    st.session_state.user_role = user_record[2]
                     st.success("Login successful! Loading dashboard...")
                     st.rerun()
                 else:
@@ -113,24 +137,30 @@ if not st.session_state.logged_in:
             if st.button("Create Account", use_container_width=True, type="primary"):
                 if not new_email or not new_pass or not new_name:
                     st.warning("Please fill out all fields.")
-                elif new_email in st.session_state.users_db:
-                    st.error("Email already registered! Please login instead.")
                 else:
-                    st.session_state.users_db[new_email] = {
-                        "password": new_pass,
-                        "name": new_name,
-                        "role": new_role
-                    }
-                    st.session_state.logged_in = True
-                    st.session_state.user_email = new_email
-                    st.session_state.user_name = new_name
-                    st.session_state.user_role = new_role
-                    st.success("Account created successfully!")
-                    st.rerun()
+                    conn = sqlite3.connect("users.db")
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT email FROM users WHERE email = ?", (new_email,))
+                    exists = cursor.fetchone()
+                    
+                    if exists:
+                        st.error("Email already registered! Please login instead.")
+                    else:
+                        cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?)", (new_email, new_pass, new_name, new_role))
+                        conn.commit()
+                        conn.close()
+                        
+                        st.session_state.logged_in = True
+                        st.session_state.user_email = new_email
+                        st.session_state.user_name = new_name
+                        st.session_state.user_role = new_role
+                        st.success("Account created successfully in database!")
+                        st.rerun()
+                    conn.close()
                     
     st.stop()
 
-# 5. Sidebar Profile, Customization & Navigation
+# 6. Sidebar Profile, Customization & Navigation
 with st.sidebar:
     st.markdown("💻 **Ezitech Ecosystem (EEF AI-003)**")
     
@@ -187,7 +217,7 @@ with st.sidebar:
         st.session_state.logged_in = False
         st.rerun()
 
-# 6. Main Application Logic
+# 7. Main Application Logic
 if st.session_state.user_role == "Student":
     # ------------------ STUDENT DASHBOARD ------------------
     is_eng = (st.session_state.language == "English")
@@ -231,7 +261,6 @@ if st.session_state.user_role == "Student":
                                 role = "user" if m["role"] == "user" else "assistant"
                                 formatted_messages.append({"role": role, "content": m["content"]})
 
-                            # Updated active Groq model
                             completion = client.chat.completions.create(
                                 model="llama-3.3-70b-versatile",
                                 messages=formatted_messages,
