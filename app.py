@@ -25,8 +25,15 @@ if "user_email" not in st.session_state:
     st.session_state.user_email = "taibakabir240@gmail.com"
 if "user_linkedin" not in st.session_state:
     st.session_state.user_linkedin = "https://linkedin.com/in/taibakabir"
+
+# Load default profile image or user custom image
 if "profile_image" not in st.session_state:
-    st.session_state.profile_image = None
+    default_img_path = "WhatsApp Image 2026-08-03 at 12.06.06 PM.jpeg"
+    if os.path.exists(default_img_path):
+        st.session_state.profile_image = Image.open(default_img_path)
+    else:
+        st.session_state.profile_image = None
+
 if "student_messages" not in st.session_state:
     st.session_state.student_messages = [
         {"role": "assistant", "content": "Hello Taiba! Welcome to your Ezitech AI Mentor Workspace (AI-003). How can I assist you with your technical case studies, development frameworks, or debugging tasks today?"}
@@ -161,7 +168,7 @@ if not st.session_state.logged_in:
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
         
-        title_text = "خوش آمدید - ایزی ٹیک پورٹल" if is_urdu else "Welcome to Ezitech AI Portal"
+        title_text = "خوش آمدید - ایزی ٹیک پورٹل" if is_urdu else "Welcome to Ezitech AI Portal"
         sub_text = "اے آئی مینٹنر اسسٹنٹ اور انٹرنشپ پلیٹ فارم" if is_urdu else "AI Mentor Assistant & Internship Intelligence Platform"
         
         st.markdown(f"""
@@ -254,6 +261,7 @@ with st.sidebar:
     is_student = (st.session_state.user_role == "Student")
     role_color = "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" if is_student else "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
     
+    # Display Profile Image (Fixed default or custom uploaded)
     if st.session_state.profile_image:
         col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
         with col_img2:
@@ -274,7 +282,7 @@ with st.sidebar:
     st.markdown("### ⚙️ سیٹنگز" if is_urdu else "### ⚙️ Sidebar Settings & Profile")
     
     with st.expander("👤 پروفائل ایڈٹ کریں" if is_urdu else "👤 Edit Profile & Picture"):
-        uploaded_file = st.file_uploader("تصویر اپ لوڈ کریں" if is_urdu else "Upload Profile Picture", type=["png", "jpg", "jpeg"], key="profile_pic_uploader")
+        uploaded_file = st.file_uploader("تصویر تبدیل کریں (Upload Picture)" if is_urdu else "Upload Profile Picture", type=["png", "jpg", "jpeg"], key="profile_pic_uploader")
         if uploaded_file is not None:
             img = Image.open(uploaded_file)
             if st.session_state.profile_image != img:
@@ -335,7 +343,7 @@ with st.sidebar:
 
 # 8. Main Professional Navigation & Dashboards Logic
 if is_student:
-    heading_title = "🚀 طالب علم کا ورک اسپیس ڈ্যাশবোর্ড" if is_urdu else "🚀 Student Workspace Dashboard"
+    heading_title = "🚀 طالب علم کا ورک اسپیس ڈ্যাশবورد" if is_urdu else "🚀 Student Workspace Dashboard"
     st.markdown(f"## {heading_title}")
     
     tab_labels = [
