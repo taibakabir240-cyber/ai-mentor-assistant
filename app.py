@@ -82,7 +82,7 @@ if "student_messages" not in st.session_state:
 if "last_audio_signature" not in st.session_state:
     st.session_state.last_audio_signature = None
 
-# Circular Profile Image & WhatsApp Style Fixed Bottom Bar CSS
+# Stable Sidebar, Blue-bordered Circular Profile & WhatsApp Style Fixed Bottom Bar CSS
 if st.session_state.theme == "Dark":
     st.markdown("""
         <style>
@@ -90,16 +90,16 @@ if st.session_state.theme == "Dark":
             .stButton>button { border-radius: 8px; font-weight: 600; }
             section.main > div:last-child { padding-bottom: 120px; }
             
-            /* Circular Profile Picture Style */
+            /* Anti-blink and Stable Circular Profile Picture Style */
             [data-testid="stSidebar"] img {
                 border-radius: 50% !important;
                 object-fit: cover !important;
                 width: 90px !important;
                 height: 90px !important;
-                display: block;
-                margin-left: auto;
-                margin-right: auto;
-                border: 3px solid #2a5298;
+                display: block !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                border: 3px solid #4a90e2 !important;
             }
 
             .whatsapp-fixed-bar {
@@ -122,16 +122,16 @@ else:
             .stButton>button { border-radius: 8px; font-weight: 600; }
             section.main > div:last-child { padding-bottom: 120px; }
             
-            /* Circular Profile Picture Style */
+            /* Anti-blink and Stable Circular Profile Picture Style */
             [data-testid="stSidebar"] img {
                 border-radius: 50% !important;
                 object-fit: cover !important;
                 width: 90px !important;
                 height: 90px !important;
-                display: block;
-                margin-left: auto;
-                margin-right: auto;
-                border: 3px solid #1e3c72;
+                display: block !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+                border: 3px solid #2a5298 !important;
             }
 
             .whatsapp-fixed-bar {
@@ -244,9 +244,11 @@ with st.sidebar:
     is_student = (st.session_state.user_role == "Student")
     role_color = "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" if is_student else "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
     
-    # Display Circular Profile Picture or Default Avatar Icon
+    # Display Perfectly Centered Profile Picture or Default Avatar Icon
     if st.session_state.profile_image:
-        st.image(st.session_state.profile_image)
+        col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
+        with col_img2:
+            st.image(st.session_state.profile_image)
     else:
         avatar_icon = "🧕" if is_student else "👨‍🏫"
         st.markdown(f"<div style='font-size: 50px; text-align: center;'>{avatar_icon}</div>", unsafe_allow_html=True)
