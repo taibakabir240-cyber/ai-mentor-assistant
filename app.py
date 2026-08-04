@@ -161,7 +161,6 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🧭 Navigation Menu")
     
-    # Segregated navigation menus for Student and Mentor
     if st.session_state.user_role == "Student":
         nav_options = [
             "AI Chat Assistant" if st.session_state.language == "English" else "AI چیٹ اسسٹنٹ", 
@@ -188,7 +187,7 @@ with st.sidebar:
         st.session_state.logged_in = False
         st.rerun()
 
-# 6. Main Application Logic (Separate Dashboards)
+# 6. Main Application Logic
 if st.session_state.user_role == "Student":
     # ------------------ STUDENT DASHBOARD ------------------
     is_eng = (st.session_state.language == "English")
@@ -232,8 +231,9 @@ if st.session_state.user_role == "Student":
                                 role = "user" if m["role"] == "user" else "assistant"
                                 formatted_messages.append({"role": role, "content": m["content"]})
 
+                            # Updated active Groq model
                             completion = client.chat.completions.create(
-                                model="mixtral-8x7b-32768",
+                                model="llama-3.3-70b-versatile",
                                 messages=formatted_messages,
                                 temperature=0.7,
                                 max_tokens=1024
