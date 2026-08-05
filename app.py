@@ -29,7 +29,7 @@ if "profile_image" not in st.session_state:
     st.session_state.profile_image = None
 if "student_messages" not in st.session_state:
     st.session_state.student_messages = [
-        {"role": "assistant", "content": "Hello Taiba! Welcome to your Ezitech AI Mentor Workspace . How can I assist you with your technical case studies, development frameworks, or debugging tasks today?"}
+        {"role": "assistant", "content": "Hello dear! Welcome to your Ezitech AI Mentor Workspace . How can I assist you with your technical case studies, development frameworks, or debugging tasks today?"}
     ]
 if "last_audio_signature" not in st.session_state:
     st.session_state.last_audio_signature = None
